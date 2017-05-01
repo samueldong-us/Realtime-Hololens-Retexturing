@@ -37,7 +37,7 @@ VertexShaderOutput main(VertexShaderInput input)
     // Taking the modulo of the instance ID allows geometry instancing to be used
     // along with stereo instanced drawing; in that case, two copies of each 
     // instance would be drawn, one for left and one for right.
-    int idx = input.instId % 2;
+    int idx = input.instId;
 
     // Transform the vertex position into world space.
     pos = mul(pos, model);

@@ -16,6 +16,7 @@ namespace Realistic_Hololens_Rendering.Common
         private Texture2D deviceTexture;
         private MediaCapture mediaCapture;
         private MediaFrameReader mediaFrameReader;
+        public bool Ready { get; private set; }
 
         public PhysicalCamera(Device device)
         {
@@ -94,6 +95,7 @@ namespace Realistic_Hololens_Rendering.Common
                 });
                 cameraTexture = frameTexture.Device.OpenSharedResource<Texture2D>(texture.QueryInterface<SharpDX.DXGI.Resource>().SharedHandle);
                 deviceTexture = device.OpenSharedResource<Texture2D>(texture.QueryInterface<SharpDX.DXGI.Resource>().SharedHandle);
+                Ready = true;
             }
             LockTexture(cameraTexture);
             frameTexture.Device.ImmediateContext.CopyResource(frameTexture, cameraTexture);

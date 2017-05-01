@@ -45,7 +45,7 @@ namespace Realistic_Hololens_Rendering.Common
 
         // Back buffer resources, etc. for attached holographic cameras.
         private Dictionary<uint, CameraResources> cameraResourcesDictionary = new Dictionary<uint, CameraResources>();
-        private Object                          cameraResourcesLock = new Object();
+        private object cameraResourcesLock = new object();
 
         /// <summary>
         /// Constructor for DeviceResources.
@@ -61,9 +61,9 @@ namespace Realistic_Hololens_Rendering.Common
         private void CreateDeviceIndependentResources()
         {
             // Dispose previous references and set to null
-            this.RemoveAndDispose(ref d2dFactory);
-            this.RemoveAndDispose(ref dwriteFactory);
-            this.RemoveAndDispose(ref wicFactory);
+            RemoveAndDispose(ref d2dFactory);
+            RemoveAndDispose(ref dwriteFactory);
+            RemoveAndDispose(ref wicFactory);
 
             // Initialize Direct2D resources.
             var debugLevel = SharpDX.Direct2D1.DebugLevel.None;
@@ -75,7 +75,7 @@ namespace Realistic_Hololens_Rendering.Common
 #endif
 
             // Initialize the Direct2D Factory.
-            d2dFactory = this.ToDispose(
+            d2dFactory = ToDispose(
                 new SharpDX.Direct2D1.Factory2(
                     SharpDX.Direct2D1.FactoryType.SingleThreaded,
                     debugLevel
@@ -83,12 +83,12 @@ namespace Realistic_Hololens_Rendering.Common
                 );
 
             // Initialize the DirectWrite Factory.
-            dwriteFactory = this.ToDispose(
+            dwriteFactory = ToDispose(
                 new SharpDX.DirectWrite.Factory1(SharpDX.DirectWrite.FactoryType.Shared)
                 );
 
             // Initialize the Windows Imaging Component (WIC) Factory.
-            wicFactory = this.ToDispose(
+            wicFactory = ToDispose(
                 new SharpDX.WIC.ImagingFactory2()
                 );
         }
@@ -129,7 +129,7 @@ namespace Realistic_Hololens_Rendering.Common
             }
             else
             {
-                this.RemoveAndDispose(ref dxgiAdapter);
+                RemoveAndDispose(ref dxgiAdapter);
             }
 
             CreateDeviceResources();
@@ -179,7 +179,7 @@ namespace Realistic_Hololens_Rendering.Common
                     using (var device = new Device(dxgiAdapter, creationFlags, featureLevels))
                     {
                         // Store pointers to the Direct3D 11.1 API device.
-                        d3dDevice = this.ToDispose(device.QueryInterface<Device3>());
+                        d3dDevice = ToDispose(device.QueryInterface<Device3>());
                     }
                 }
                 else
@@ -187,7 +187,7 @@ namespace Realistic_Hololens_Rendering.Common
                     using (var device = new Device(DriverType.Hardware, creationFlags, featureLevels))
                     {
                         // Store a pointer to the Direct3D device.
-                        d3dDevice = this.ToDispose(device.QueryInterface<Device3>());
+                        d3dDevice = ToDispose(device.QueryInterface<Device3>());
                     }
                 }
             }
@@ -198,7 +198,7 @@ namespace Realistic_Hololens_Rendering.Common
                 // http://go.microsoft.com/fwlink/?LinkId=286690
                 using (var device = new Device(DriverType.Warp, creationFlags, featureLevels))
                 {
-                    d3dDevice = this.ToDispose(device.QueryInterface<Device3>());
+                    d3dDevice = ToDispose(device.QueryInterface<Device3>());
                 }
             }
 
@@ -206,7 +206,7 @@ namespace Realistic_Hololens_Rendering.Common
             d3dFeatureLevel = d3dDevice.FeatureLevel;
 
             // Store a pointer to the Direct3D immediate context.
-            d3dContext = this.ToDispose(d3dDevice.ImmediateContext3);
+            d3dContext = ToDispose(d3dDevice.ImmediateContext3);
 
             // Acquire the DXGI interface for the Direct3D device.
             using (var dxgiDevice = d3dDevice.QueryInterface<SharpDX.DXGI.Device3>())
@@ -222,7 +222,7 @@ namespace Realistic_Hololens_Rendering.Common
 
                 // Store a pointer to the DXGI adapter.
                 // This is for the case of no preferred DXGI adapter, or fallback to WARP.
-                dxgiAdapter = this.ToDispose(dxgiDevice.Adapter.QueryInterface<SharpDX.DXGI.Adapter3>());
+                dxgiAdapter = ToDispose(dxgiDevice.Adapter.QueryInterface<SharpDX.DXGI.Adapter3>());
             }
 
             // Check for device support for the optional feature that allows setting the render target array index from the vertex shader stage.
@@ -239,9 +239,9 @@ namespace Realistic_Hololens_Rendering.Common
         private void DisposeDeviceAndContext()
         {
             // Dispose existing references to Direct3D 11 device and contxt, and set to null.
-            this.RemoveAndDispose(ref d3dDevice);
-            this.RemoveAndDispose(ref d3dContext);
-            this.RemoveAndDispose(ref dxgiAdapter);
+            RemoveAndDispose(ref d3dDevice);
+            RemoveAndDispose(ref d3dContext);
+            RemoveAndDispose(ref dxgiAdapter);
 
             // Release the interop device.
             d3dInteropDevice = null;

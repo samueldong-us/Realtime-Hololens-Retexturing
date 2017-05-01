@@ -51,11 +51,11 @@ namespace Realistic_Hololens_Rendering
         /// </summary>
         public void Initialize(CoreApplicationView applicationView)
         {
-            applicationView.Activated += this.OnViewActivated;
+            applicationView.Activated += OnViewActivated;
 
             // Register event handlers for app lifecycle.
-            CoreApplication.Suspending += this.OnSuspending;
-            CoreApplication.Resuming += this.OnResuming;
+            CoreApplication.Suspending += OnSuspending;
+            CoreApplication.Resuming += OnResuming;
 
             // At this point we have access to the device and we can create device-dependent
             // resources.
@@ -70,13 +70,13 @@ namespace Realistic_Hololens_Rendering
         public void SetWindow(CoreWindow window)
         {
             // Register for keypress notifications.
-            window.KeyDown += this.OnKeyPressed;
+            window.KeyDown += OnKeyPressed;
 
             // Register for notification that the app window is being closed.
-            window.Closed += this.OnWindowClosed;
+            window.Closed += OnWindowClosed;
 
             // Register for notifications that the app window is losing focus.
-            window.VisibilityChanged += this.OnVisibilityChanged;
+            window.VisibilityChanged += OnVisibilityChanged;
 
             // Create a holographic space for the core window for the current view.
             // Presenting holographic frames that are created by this holographic space will put

@@ -20,7 +20,7 @@ namespace Realistic_Hololens_Rendering.Common
             interactionManager = SpatialInteractionManager.GetForCurrentView();
 
             // Bind a handler to the SourcePressed event.
-            interactionManager.SourcePressed += this.OnSourcePressed;
+            interactionManager.SourcePressed += OnSourcePressed;
 
             //
             // TODO: Expand this class to use other gesture-based input events as applicable to

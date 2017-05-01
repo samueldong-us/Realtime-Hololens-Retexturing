@@ -23,5 +23,17 @@ namespace Realistic_Hololens_Rendering.Content
 
         public Vector3 pos;
         public Vector3 color;
-    };
+    }
+
+    internal struct VertexPositionUv
+    {
+        public Vector3 position;
+        public Vector2 uv;
+
+        public VertexPositionUv(Vector3 position, Vector2 uv)
+        {
+            this.position = position;
+            this.uv = uv;
+        }
+    }
 }

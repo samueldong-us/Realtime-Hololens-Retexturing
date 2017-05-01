@@ -35,6 +35,8 @@ namespace Realistic_Hololens_Rendering
         // Renders a colorful holographic cube that's 20 centimeters wide. This sample content
         // is used to demonstrate world-locked rendering.
         private SpinningCubeRenderer        spinningCubeRenderer;
+        private CameraTestRenderer cameraTestRenderer;
+        private PhysicalCamera physicalCamera;
         
         private SpatialInputHandler         spatialInputHandler;
 #endif
@@ -63,8 +65,8 @@ namespace Realistic_Hololens_Rendering
             this.deviceResources = deviceResources;
 
             // Register to be notified if the Direct3D device is lost.
-            this.deviceResources.DeviceLost     += this.OnDeviceLost;
-            this.deviceResources.DeviceRestored += this.OnDeviceRestored;
+            this.deviceResources.DeviceLost     += OnDeviceLost;
+            this.deviceResources.DeviceRestored += OnDeviceRestored;
         }
 
         public void SetHolographicSpace(HolographicSpace holographicSpace)
@@ -78,6 +80,9 @@ namespace Realistic_Hololens_Rendering
 #if DRAW_SAMPLE_CONTENT
             // Initialize the sample hologram.
             spinningCubeRenderer = new SpinningCubeRenderer(deviceResources);
+            physicalCamera = new PhysicalCamera(deviceResources.D3DDevice);
+            physicalCamera.Initialize();
+            cameraTestRenderer = new CameraTestRenderer(deviceResources, physicalCamera);
 
             spatialInputHandler = new SpatialInputHandler();
 #endif
@@ -86,7 +91,7 @@ namespace Realistic_Hololens_Rendering
             locator = SpatialLocator.GetDefault();
 
             // Be able to respond to changes in the positional tracking state.
-            locator.LocatabilityChanged += this.OnLocatabilityChanged;
+            locator.LocatabilityChanged += OnLocatabilityChanged;
 
             // Respond to camera added events by creating any resources that are specific
             // to that camera, such as the back buffer render target view.
@@ -96,7 +101,7 @@ namespace Realistic_Hololens_Rendering
             // allows the app to take more than one frame to finish creating resources and
             // loading assets for the new holographic camera.
             // This function should be registered before the app creates any HolographicFrames.
-            holographicSpace.CameraAdded += this.OnCameraAdded;
+            holographicSpace.CameraAdded += OnCameraAdded;
 
             // Respond to camera removed events by releasing resources that were created for that
             // camera.
@@ -104,7 +109,7 @@ namespace Realistic_Hololens_Rendering
             // buffer right away. This includes render target views, Direct2D target bitmaps, and so on.
             // The app must also ensure that the back buffer is not attached as a render target, as
             // shown in DeviceResources.ReleaseResourcesForBackBuffer.
-            holographicSpace.CameraRemoved += this.OnCameraRemoved;
+            holographicSpace.CameraRemoved += OnCameraRemoved;
 
             // The simplest way to render world-locked holograms is to create a stationary reference frame
             // when the app is launched. This is roughly analogous to creating a "world" coordinate system
@@ -130,6 +135,8 @@ namespace Realistic_Hololens_Rendering
                 spinningCubeRenderer.Dispose();
                 spinningCubeRenderer = null;
             }
+            cameraTestRenderer?.Dispose();
+            cameraTestRenderer = null;
 #endif
         }
 
@@ -170,6 +177,7 @@ namespace Realistic_Hololens_Rendering
                 spinningCubeRenderer.PositionHologram(
                     pointerState.TryGetPointerPose(currentCoordinateSystem)
                     );
+                cameraTestRenderer.PositionHologram(pointerState.TryGetPointerPose(currentCoordinateSystem));
             }
 #endif
 
@@ -185,6 +193,7 @@ namespace Realistic_Hololens_Rendering
 
 #if DRAW_SAMPLE_CONTENT
                 spinningCubeRenderer.Update(timer);
+                cameraTestRenderer.Update(timer);
 #endif
             });
 
@@ -303,7 +312,8 @@ namespace Realistic_Hololens_Rendering
                     if (cameraActive)
                     {
                         // Draw the sample hologram.
-                        spinningCubeRenderer.Render();
+                        //spinningCubeRenderer.Render();
+                        cameraTestRenderer.Render();
                     }
 #endif
                     atLeastOneCameraRendered = true;
@@ -337,11 +347,12 @@ namespace Realistic_Hololens_Rendering
         /// <summary>
         /// Notifies renderers that device resources need to be released.
         /// </summary>
-        public void OnDeviceLost(Object sender, EventArgs e)
+        public void OnDeviceLost(object sender, EventArgs e)
         {
 
 #if DRAW_SAMPLE_CONTENT
             spinningCubeRenderer.ReleaseDeviceDependentResources();
+            cameraTestRenderer.ReleaseDeviceDependentResources();
 #endif
 
         }
@@ -349,14 +360,15 @@ namespace Realistic_Hololens_Rendering
         /// <summary>
         /// Notifies renderers that device resources may now be recreated.
         /// </summary>
-        public void OnDeviceRestored(Object sender, EventArgs e)
+        public void OnDeviceRestored(object sender, EventArgs e)
         {
 #if DRAW_SAMPLE_CONTENT
             spinningCubeRenderer.CreateDeviceDependentResourcesAsync();
+            cameraTestRenderer.CreateDeviceDependentResourcesAsync();
 #endif
         }
 
-        void OnLocatabilityChanged(SpatialLocator sender, Object args)
+        void OnLocatabilityChanged(SpatialLocator sender, object args)
         {
             switch (sender.Locatability)
             {

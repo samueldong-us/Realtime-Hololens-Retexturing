@@ -46,6 +46,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\PhysicalCamera.cs" />
+    <Compile Include="Content\CameraTestRenderer.cs" />
     <Compile Include="Realistic_Hololens_RenderingMain.cs" />
     <Compile Include="AppView.cs" />
     <Compile Include="AppViewSource.cs" />
@@ -68,9 +69,6 @@
     <None Include="Realistic Hololens Rendering_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Properties\Default.rd.xml" />
-  </ItemGroup>
-  <ItemGroup>
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
     <Content Include="Assets\SplashScreen.scale-200.png" />
     <Content Include="Assets\Square150x150Logo.scale-200.png" />
@@ -84,6 +82,18 @@
     <PixelShader Include="Content\Shaders\PixelShader.hlsl" />
     <VertexShader Include="Content\Shaders\VertexShader.hlsl" />
     <VertexShader Include="Content\Shaders\VPRTVertexShader.hlsl" />
+    <GeometryShader Include="Content\Shaders\Camera Testing\GeometryShader.hlsl">
+      <EntryPointName>main</EntryPointName>
+    </GeometryShader>
+    <PixelShader Include="Content\Shaders\Camera Testing\PixelShader.hlsl">
+      <EntryPointName>main</EntryPointName>
+    </PixelShader>
+    <VertexShader Include="Content\Shaders\Camera Testing\VertexShader.hlsl">
+      <EntryPointName>main</EntryPointName>
+    </VertexShader>
+    <VertexShader Include="Content\Shaders\Camera Testing\VprtVertexShader.hlsl">
+      <EntryPointName>main</EntryPointName>
+    </VertexShader>
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>

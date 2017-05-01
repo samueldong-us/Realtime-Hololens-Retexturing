@@ -98,7 +98,7 @@ namespace Realistic_Hololens_Rendering.Common
                 // Create a render target view of the back buffer.
                 // Creating this resource is inexpensive, and is better than keeping track of
                 // the back buffers in order to pre-allocate render target views for each one.
-                d3dRenderTargetView = this.ToDispose(new RenderTargetView(device, BackBufferTexture2D));
+                d3dRenderTargetView = ToDispose(new RenderTargetView(device, BackBufferTexture2D));
 
                 // Get the DXGI format for the back buffer.
                 // This information can be accessed by the app using CameraResources::GetBackBufferDXGIFormat().
@@ -113,7 +113,7 @@ namespace Realistic_Hololens_Rendering.Common
                     d3dRenderTargetSize = HolographicCamera.RenderTargetSize;
 
                     // A new depth stencil view is also needed.
-                    this.RemoveAndDispose(ref d3dDepthStencilView);
+                    RemoveAndDispose(ref d3dDepthStencilView);
                 }
             }
 
@@ -137,7 +137,7 @@ namespace Realistic_Hololens_Rendering.Common
                     var depthStencilViewDesc = new DepthStencilViewDescription();
                     depthStencilViewDesc.Dimension = IsRenderingStereoscopic ? DepthStencilViewDimension.Texture2DArray : DepthStencilViewDimension.Texture2D;
                     depthStencilViewDesc.Texture2DArray.ArraySize = IsRenderingStereoscopic ? 2 : 0;
-                    d3dDepthStencilView = this.ToDispose(new DepthStencilView(device, depthStencil, depthStencilViewDesc));
+                    d3dDepthStencilView = ToDispose(new DepthStencilView(device, depthStencil, depthStencilViewDesc));
                 }
             }
 
@@ -146,7 +146,7 @@ namespace Realistic_Hololens_Rendering.Common
             {
                 // Create a constant buffer to store view and projection matrices for the camera.
                 ViewProjectionConstantBuffer viewProjectionConstantBufferData = new ViewProjectionConstantBuffer();
-                viewProjectionConstantBuffer = this.ToDispose(SharpDX.Direct3D11.Buffer.Create(
+                viewProjectionConstantBuffer = ToDispose(SharpDX.Direct3D11.Buffer.Create(
                     device,
                     BindFlags.ConstantBuffer,
                     ref viewProjectionConstantBufferData));
@@ -160,9 +160,9 @@ namespace Realistic_Hololens_Rendering.Common
         {
             var context = deviceResources.D3DDeviceContext;
 
-            this.RemoveAndDispose(ref d3dBackBuffer);
-            this.RemoveAndDispose(ref d3dRenderTargetView);
-            this.RemoveAndDispose(ref d3dDepthStencilView);
+            RemoveAndDispose(ref d3dBackBuffer);
+            RemoveAndDispose(ref d3dRenderTargetView);
+            RemoveAndDispose(ref d3dDepthStencilView);
             
             const int D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT = 8;
             RenderTargetView[] nullViews = new RenderTargetView[D3D11_SIMULTANEOUS_RENDER_TARGET_COUNT];
@@ -176,7 +176,7 @@ namespace Realistic_Hololens_Rendering.Common
         public void ReleaseAllDeviceResources(DeviceResources deviceResources)
         {
             ReleaseResourcesForBackBuffer(deviceResources);
-            this.RemoveAndDispose(ref viewProjectionConstantBuffer);
+            RemoveAndDispose(ref viewProjectionConstantBuffer);
         }
 
         /// <summary>
