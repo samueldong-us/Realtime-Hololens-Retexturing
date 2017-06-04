@@ -45,8 +45,11 @@
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common\SpatialMesh.cs" />
+    <Compile Include="Common\MeshCollection.cs" />
     <Compile Include="Common\PhysicalCamera.cs" />
     <Compile Include="Content\CameraTestRenderer.cs" />
+    <Compile Include="Content\MeshTestRenderer.cs" />
     <Compile Include="Realistic_Hololens_RenderingMain.cs" />
     <Compile Include="AppView.cs" />
     <Compile Include="AppViewSource.cs" />
@@ -94,6 +97,10 @@
     <VertexShader Include="Content\Shaders\Camera Testing\VprtVertexShader.hlsl">
       <EntryPointName>main</EntryPointName>
     </VertexShader>
+    <VertexShader Include="Content\Shaders\Mesh Testing\VprtVertexShader.hlsl" />
+    <VertexShader Include="Content\Shaders\Mesh Testing\VertexShader.hlsl" />
+    <PixelShader Include="Content\Shaders\Mesh Testing\PixelShader.hlsl" />
+    <GeometryShader Include="Content\Shaders\Mesh Testing\GeometryShader.hlsl" />
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>

@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" IgnorableNamespaces="uap mp">
+<Package xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10" xmlns:mp="http://schemas.microsoft.com/appx/2014/phone/manifest" xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10" xmlns:uap2="http://schemas.microsoft.com/appx/manifest/uap/windows10/2" IgnorableNamespaces="uap uap2 mp">
   <Identity Name="Realistic-Hololens-Rendering" Publisher="CN=Samuel" Version="1.0.0.0" />
   <mp:PhoneIdentity PhoneProductId="30a3d896-e32e-4215-8f92-cc0cd0b90d63" PhonePublisherId="00000000-0000-0000-0000-000000000000" />
   <Properties>
@@ -23,6 +23,7 @@
     </Application>
   </Applications>
   <Capabilities>
+    <uap2:Capability Name="spatialPerception"/>
     <DeviceCapability Name="microphone" />
     <DeviceCapability Name="webcam" />
   </Capabilities>

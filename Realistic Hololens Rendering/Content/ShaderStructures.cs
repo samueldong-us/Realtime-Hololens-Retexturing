@@ -10,6 +10,12 @@ namespace Realistic_Hololens_Rendering.Content
         public Matrix4x4 model;
     }
 
+    internal struct TransformConstantBuffer
+    {
+        public Matrix4x4 VertexTransform;
+        public Matrix4x4 NormalTransform;
+    }
+
     /// <summary>
     /// Used to send per-vertex data to the vertex shader.
     /// </summary>

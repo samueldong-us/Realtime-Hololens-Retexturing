@@ -26,9 +26,9 @@ VertexShaderOutput main(VertexShaderInput input)
 {
 	VertexShaderOutput output;
 	float4 position = float4(input.position, 1.0f);
-	position = mul(mul(viewProjection[input.instanceId], model), position);
+	position = mul(mul(position, model), viewProjection[input.instanceId % 2]);
 	output.position = (min16float4)position;
 	output.uv = input.uv;
-	output.renderTargetId = input.instanceId;
+	output.renderTargetId = input.instanceId % 2;
 	return output;
 }

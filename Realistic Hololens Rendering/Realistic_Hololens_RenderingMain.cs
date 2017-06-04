@@ -36,6 +36,7 @@ namespace Realistic_Hololens_Rendering
         // is used to demonstrate world-locked rendering.
         private SpinningCubeRenderer        spinningCubeRenderer;
         private CameraTestRenderer cameraTestRenderer;
+        private MeshTestRenderer meshTestRenderer;
         private PhysicalCamera physicalCamera;
         
         private SpatialInputHandler         spatialInputHandler;
@@ -83,6 +84,7 @@ namespace Realistic_Hololens_Rendering
             physicalCamera = new PhysicalCamera(deviceResources.D3DDevice);
             physicalCamera.Initialize();
             cameraTestRenderer = new CameraTestRenderer(deviceResources, physicalCamera);
+            meshTestRenderer = new MeshTestRenderer(deviceResources);
 
             spatialInputHandler = new SpatialInputHandler();
 #endif
@@ -116,6 +118,7 @@ namespace Realistic_Hololens_Rendering
             // with the origin placed at the device's position as the app is launched.
             referenceFrame = locator.CreateStationaryFrameOfReferenceAtCurrentLocation();
 
+            meshTestRenderer.Initialize(referenceFrame.CoordinateSystem);
             // Notes on spatial tracking APIs:
             // * Stationary reference frames are designed to provide a best-fit position relative to the
             //   overall space. Individual positions within that reference frame are allowed to drift slightly
@@ -194,6 +197,7 @@ namespace Realistic_Hololens_Rendering
 #if DRAW_SAMPLE_CONTENT
                 spinningCubeRenderer.Update(timer);
                 cameraTestRenderer.Update(timer);
+                meshTestRenderer.UpdateTransform(currentCoordinateSystem);
 #endif
             });
 
@@ -314,6 +318,7 @@ namespace Realistic_Hololens_Rendering
                         // Draw the sample hologram.
                         //spinningCubeRenderer.Render();
                         cameraTestRenderer.Render();
+                        meshTestRenderer.Render();
                     }
 #endif
                     atLeastOneCameraRendered = true;
