@@ -213,7 +213,7 @@ namespace Realistic_Hololens_Rendering.Common
             {
                 // Wrap the native device using a WinRT interop object.
                 IntPtr pUnknown;
-                UInt32 hr = InteropStatics.CreateDirect3D11DeviceFromDXGIDevice(dxgiDevice.NativePointer, out pUnknown);
+                uint hr = InteropStatics.CreateDirect3D11DeviceFromDXGIDevice(dxgiDevice.NativePointer, out pUnknown);
                 if (hr == 0)
                 {
                     d3dInteropDevice = (IDirect3DDevice)Marshal.GetObjectForIUnknown(pUnknown);

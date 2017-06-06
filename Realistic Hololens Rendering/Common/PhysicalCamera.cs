@@ -1,9 +1,11 @@
 ﻿using SharpDX.Direct3D11;
 using System;
 using System.Linq;
+using System.Numerics;
 using System.Runtime.InteropServices;
 using Windows.Media.Capture;
 using Windows.Media.Capture.Frames;
+using Windows.Perception.Spatial;
 
 namespace Realistic_Hololens_Rendering.Common
 {
@@ -12,10 +14,14 @@ namespace Realistic_Hololens_Rendering.Common
         private const int LockTimeout = 100;
         private const long SharedTextureKey = 0L;
         private Texture2D cameraTexture;
+        private SpatialCoordinateSystem CoordinateSystem;
         private Device device;
         private Texture2D deviceTexture;
         private MediaCapture mediaCapture;
         private MediaFrameReader mediaFrameReader;
+        private Matrix4x4 ProjectionMatrix;
+        private object TransformLock = new object();
+        private Matrix4x4 ViewMatrix;
         public bool Ready { get; private set; }
 
         public PhysicalCamera(Device device)
@@ -26,8 +32,21 @@ namespace Realistic_Hololens_Rendering.Common
 
         public Texture2D AcquireTexture()
         {
+            if (deviceTexture == null)
+                return null;
             LockTexture(deviceTexture);
             return deviceTexture;
+        }
+
+        public Matrix4x4 GetWorldToCameraMatrix(SpatialCoordinateSystem originCoordinateSystem)
+        {
+            lock (TransformLock)
+            {
+                if (CoordinateSystem == null)
+                    return Matrix4x4.Identity;
+                var transform = originCoordinateSystem.TryGetTransformTo(CoordinateSystem) ?? Matrix4x4.Identity;
+                return transform * ViewMatrix * ProjectionMatrix;
+            }
         }
 
         public async void Initialize()
@@ -72,6 +91,13 @@ namespace Realistic_Hololens_Rendering.Common
         private void OnFrameArrived(MediaFrameReader sender, MediaFrameArrivedEventArgs args)
         {
             var reference = sender.TryAcquireLatestFrame();
+            lock (TransformLock)
+            {
+                CoordinateSystem = reference.Properties[InteropStatics.MFSampleExtensionSpatialCameraCoordinateSystem] as SpatialCoordinateSystem;
+                ViewMatrix = (reference.Properties[InteropStatics.MFSampleExtensionSpatialCameraViewTransform] as byte[]).ToMatrix4x4();
+                ProjectionMatrix = (reference.Properties[InteropStatics.MFSampleExtensionSpatialCameraProjectionTransform] as byte[]).ToMatrix4x4();
+            }
+
             var surface = reference.VideoMediaFrame.Direct3DSurface;
             var surfaceInterfaceAccess = surface as InteropStatics.IDirect3DDxgiInterfaceAccess;
             IntPtr resourcePointer = surfaceInterfaceAccess.GetInterface(InteropStatics.ID3D11Resource);

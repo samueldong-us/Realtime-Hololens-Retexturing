@@ -48,6 +48,7 @@
     <Compile Include="Common\SpatialMesh.cs" />
     <Compile Include="Common\MeshCollection.cs" />
     <Compile Include="Common\PhysicalCamera.cs" />
+    <Compile Include="Common\Utilities.cs" />
     <Compile Include="Content\CameraTestRenderer.cs" />
     <Compile Include="Content\MeshTestRenderer.cs" />
     <Compile Include="Realistic_Hololens_RenderingMain.cs" />

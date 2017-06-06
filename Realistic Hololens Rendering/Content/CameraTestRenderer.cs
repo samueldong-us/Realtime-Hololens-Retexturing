@@ -142,6 +142,8 @@ namespace Realistic_Hololens_Rendering.Content
             }
             context.PixelShader.SetShader(pixelShader, null, 0);
             var cameraTexture = physicalCamera.AcquireTexture();
+            if (cameraTexture == null)
+                return;
             var luminanceView = new SharpDX.Direct3D11.ShaderResourceView(device, cameraTexture, new SharpDX.Direct3D11.ShaderResourceViewDescription()
             {
                 Format = SharpDX.DXGI.Format.R8_UInt,

@@ -84,7 +84,7 @@ namespace Realistic_Hololens_Rendering
             physicalCamera = new PhysicalCamera(deviceResources.D3DDevice);
             physicalCamera.Initialize();
             cameraTestRenderer = new CameraTestRenderer(deviceResources, physicalCamera);
-            meshTestRenderer = new MeshTestRenderer(deviceResources);
+            meshTestRenderer = new MeshTestRenderer(deviceResources, physicalCamera);
 
             spatialInputHandler = new SpatialInputHandler();
 #endif

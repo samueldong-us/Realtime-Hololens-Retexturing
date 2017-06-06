@@ -7,8 +7,12 @@ namespace Realistic_Hololens_Rendering.Common
     {
         public static Guid IInspectable   = new Guid("AF86E2E0-B12D-4c6a-9C5A-D7AA65101E90");
         public static Guid ID3D11Resource = new Guid("dc8e63f3-d12b-4952-b47b-5e45026a862d");
-        public static Guid IDXGIAdapter3  = new Guid("645967A4-1392-4310-A798-8053CE3E93FD");
-        
+        public static Guid IDXGIAdapter3 = new Guid("645967A4-1392-4310-A798-8053CE3E93FD");
+
+        public static Guid MFSampleExtensionSpatialCameraCoordinateSystem = new Guid("9D13C82F-2199-4E67-91CD-D1A4181F2534");
+        public static Guid MFSampleExtensionSpatialCameraViewTransform = new Guid("4E251FA4-830F-4770-859A-4B8D99AA809B");
+        public static Guid MFSampleExtensionSpatialCameraProjectionTransform = new Guid("47F9FCB5-2A02-4F26-A477-792FDF95886A");
+
         [DllImport(
             "d3d11.dll",
             EntryPoint          = "CreateDirect3D11DeviceFromDXGIDevice",
@@ -17,7 +21,7 @@ namespace Realistic_Hololens_Rendering.Common
             ExactSpelling       = true,
             CallingConvention   = CallingConvention.StdCall
             )]
-        public static extern UInt32 CreateDirect3D11DeviceFromDXGIDevice(IntPtr dxgiDevice, out IntPtr graphicsDevice);
+        public static extern uint CreateDirect3D11DeviceFromDXGIDevice(IntPtr dxgiDevice, out IntPtr graphicsDevice);
 
         [ComImport]
         [Guid("A9B3D012-3DF2-4EE3-B8D1-8695F457D3C1")]

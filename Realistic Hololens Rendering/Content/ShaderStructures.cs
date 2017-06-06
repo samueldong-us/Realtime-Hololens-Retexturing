@@ -16,6 +16,11 @@ namespace Realistic_Hololens_Rendering.Content
         public Matrix4x4 NormalTransform;
     }
 
+    internal struct CameraConstantBuffer
+    {
+        public Matrix4x4 ViewProjection;
+    }
+
     /// <summary>
     /// Used to send per-vertex data to the vertex shader.
     /// </summary>
