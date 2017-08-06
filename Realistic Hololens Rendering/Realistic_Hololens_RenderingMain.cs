@@ -81,7 +81,7 @@ namespace Realistic_Hololens_Rendering
 #if DRAW_SAMPLE_CONTENT
             // Initialize the sample hologram.
             spinningCubeRenderer = new SpinningCubeRenderer(deviceResources);
-            physicalCamera = new PhysicalCamera(deviceResources.D3DDevice);
+            physicalCamera = new PhysicalCamera(deviceResources.D3DDevice, false);
             physicalCamera.Initialize();
             cameraTestRenderer = new CameraTestRenderer(deviceResources, physicalCamera);
             meshTestRenderer = new MeshTestRenderer(deviceResources, physicalCamera);
