@@ -37,7 +37,7 @@ namespace Realistic_Hololens_Rendering.Common
         private void CreateMatrixArrayBuffer()
         {
             var eyeVectors = new[]
-                        {
+            {
                 Position + Vector3.UnitX,
                 Position - Vector3.UnitX,
                 Position + Vector3.UnitY,
@@ -127,6 +127,7 @@ namespace Realistic_Hololens_Rendering.Common
             ShaderResourceView = ToDispose(new ShaderResourceView(device, Faces, shaderResourceViewDescription));
             
             Resources.D3DDeviceContext.ClearRenderTargetView(RenderTargetView, new SharpDX.Mathematics.Interop.RawColor4(0.0f, 0.0f, 0.0f, 0.0f));
+            Resources.D3DDeviceContext.ClearDepthStencilView(DepthStencilView, DepthStencilClearFlags.Depth, 1.0f, 0);
         }
     }
 }

@@ -22,6 +22,11 @@ namespace Realistic_Hololens_Rendering.Content
         public Matrix4x4 ViewProjection;
     }
 
+    internal struct Vector4ConstantBuffer
+    {
+        public Vector4 Vector;
+    }
+
     internal struct CubeArrayBuffer
     {
         public Matrix4x4 ViewProjection0;

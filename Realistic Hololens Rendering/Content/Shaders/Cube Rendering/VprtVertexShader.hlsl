@@ -41,9 +41,10 @@ VertexShaderOutput main(VertexShaderInput input)
 	output.Normal = (min16float4)normal;
 	output.RenderTargetId = input.InstanceId % 6;
 	float4 cameraPosition = mul(worldPosition, CameraViewProjection);
-	cameraPosition /= cameraPosition.w;
+	float w = cameraPosition.w;
+	cameraPosition /= w;
 	float2 cameraUV = cameraPosition.xy;
 	cameraUV = (cameraUV + 1.0f) / 2.0f;
-	output.UV = (min16float2)cameraUV;
+	output.UV = w > 0 ? (min16float2)cameraUV : min16float2(-1.0, -1.0);
 	return output;
 }

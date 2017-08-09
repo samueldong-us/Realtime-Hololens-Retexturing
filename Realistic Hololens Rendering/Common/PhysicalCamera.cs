@@ -27,6 +27,7 @@ namespace Realistic_Hololens_Rendering.Common
         private bool AllowUnstableFrames;
         public bool Ready { get; private set; }
         public bool Stable { get; private set; }
+        public Vector4 Forward { get; private set; }
 
         public delegate void OnFrameUpdated();
         public event OnFrameUpdated FrameUpdated;
@@ -51,9 +52,12 @@ namespace Realistic_Hololens_Rendering.Common
         {
             lock (TransformLock)
             {
+                Forward = new Vector4(-Vector3.UnitZ, 0.0f);
                 if (CoordinateSystem == null)
                     return Matrix4x4.Identity;
                 var transform = originCoordinateSystem.TryGetTransformTo(CoordinateSystem) ?? Matrix4x4.Identity;
+                Matrix4x4.Invert(transform * ViewMatrix, out var inverseMatrix);
+                Forward = Vector4.Transform(Forward, inverseMatrix);
                 return transform * ViewMatrix * ProjectionMatrix;
             }
         }

@@ -181,6 +181,7 @@ namespace Realistic_Hololens_Rendering
                     pointerState.TryGetPointerPose(currentCoordinateSystem)
                     );
                 cameraTestRenderer.PositionHologram(pointerState.TryGetPointerPose(currentCoordinateSystem));
+                meshTestRenderer.Paused = !meshTestRenderer.Paused;
             }
 #endif
 
