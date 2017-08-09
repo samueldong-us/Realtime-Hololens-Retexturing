@@ -18,7 +18,6 @@ namespace Realistic_Hololens_Rendering.Content
         private SharpDX.Direct3D11.Buffer           vertexBuffer;
         private SharpDX.Direct3D11.Buffer           indexBuffer;
         private SharpDX.Direct3D11.VertexShader     vertexShader;
-        private SharpDX.Direct3D11.GeometryShader   geometryShader;
         private SharpDX.Direct3D11.PixelShader      pixelShader;
         private SharpDX.Direct3D11.Buffer           modelConstantBuffer;
 
@@ -141,15 +140,6 @@ namespace Realistic_Hololens_Rendering.Content
             // Apply the model constant buffer to the vertex shader.
             context.VertexShader.SetConstantBuffers(0, modelConstantBuffer);
 
-            if (!usingVprtShaders)
-            {
-                // On devices that do not support the D3D11_FEATURE_D3D11_OPTIONS3::
-                // VPAndRTArrayIndexFromAnyShaderFeedingRasterizer optional feature,
-                // a pass-through geometry shader is used to set the render target 
-                // array index.
-                context.GeometryShader.SetShader(geometryShader, null, 0);
-            }
-
             // Attach the pixel shader.
             context.PixelShader.SetShader(pixelShader, null, 0);
 
@@ -181,7 +171,7 @@ namespace Realistic_Hololens_Rendering.Content
             // we can avoid using a pass-through geometry shader to set the render
             // target array index, thus avoiding any overhead that would be 
             // incurred by setting the geometry shader stage.
-            var vertexShaderFileName = usingVprtShaders ? "Content\\Shaders\\VPRTVertexShader.cso" : "Content\\Shaders\\VertexShader.cso";
+            var vertexShaderFileName = "Content\\Shaders\\VPRTVertexShader.cso";
 
             // Load the compiled vertex shader.
             var vertexShaderByteCode = await DirectXHelper.ReadDataAsync(await folder.GetFileAsync(vertexShaderFileName));
@@ -201,17 +191,6 @@ namespace Realistic_Hololens_Rendering.Content
                 deviceResources.D3DDevice,
                 vertexShaderByteCode,
                 vertexDesc));
-            
-            if (!usingVprtShaders)
-            {
-                // Load the compiled pass-through geometry shader.
-                var geometryShaderByteCode = await DirectXHelper.ReadDataAsync(await folder.GetFileAsync("Content\\Shaders\\GeometryShader.cso"));
-
-                // After the pass-through geometry shader file is loaded, create the shader.
-                geometryShader = ToDispose(new SharpDX.Direct3D11.GeometryShader(
-                    deviceResources.D3DDevice,
-                    geometryShaderByteCode));
-            }
 
             // Load the compiled pixel shader.
             var pixelShaderByteCode = await DirectXHelper.ReadDataAsync(await folder.GetFileAsync("Content\\Shaders\\PixelShader.cso"));
@@ -295,7 +274,6 @@ namespace Realistic_Hololens_Rendering.Content
             RemoveAndDispose(ref vertexShader);
             RemoveAndDispose(ref inputLayout);
             RemoveAndDispose(ref pixelShader);
-            RemoveAndDispose(ref geometryShader);
             RemoveAndDispose(ref modelConstantBuffer);
             RemoveAndDispose(ref vertexBuffer);
             RemoveAndDispose(ref indexBuffer);

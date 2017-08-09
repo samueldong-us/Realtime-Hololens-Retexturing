@@ -3,7 +3,6 @@ using System;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.InteropServices;
-using Windows.Devices.Sensors;
 using Windows.Media.Capture;
 using Windows.Media.Capture.Frames;
 using Windows.Perception.Spatial;
@@ -29,11 +28,15 @@ namespace Realistic_Hololens_Rendering.Common
         public bool Ready { get; private set; }
         public bool Stable { get; private set; }
 
+        public delegate void OnFrameUpdated();
+        public event OnFrameUpdated FrameUpdated;
+
         public PhysicalCamera(Device device, bool allowUnstableFrames)
         {
             this.device = device;
             AllowUnstableFrames = allowUnstableFrames;
             mediaCapture = new MediaCapture();
+            FrameUpdated += () => {};
         }
 
         public Texture2D AcquireTexture()
@@ -136,6 +139,7 @@ namespace Realistic_Hololens_Rendering.Common
                 LockTexture(cameraTexture);
                 frameTexture.Device.ImmediateContext.CopyResource(frameTexture, cameraTexture);
                 UnlockTexture(cameraTexture);
+                FrameUpdated();
             }
         }
 

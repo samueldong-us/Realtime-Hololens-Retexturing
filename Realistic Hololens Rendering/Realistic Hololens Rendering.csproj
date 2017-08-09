@@ -45,6 +45,7 @@
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common\RenderableCubemap.cs" />
     <Compile Include="Common\SpatialMesh.cs" />
     <Compile Include="Common\MeshCollection.cs" />
     <Compile Include="Common\PhysicalCamera.cs" />
@@ -80,28 +81,20 @@
     <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+    <VertexShader Include="Content\Shaders\Cube Rendering\VprtVertexShader.hlsl" />
+    <PixelShader Include="Content\Shaders\Cube Rendering\PixelShader.hlsl" />
   </ItemGroup>
   <ItemGroup>
-    <GeometryShader Include="Content\Shaders\GeometryShader.hlsl" />
     <PixelShader Include="Content\Shaders\PixelShader.hlsl" />
-    <VertexShader Include="Content\Shaders\VertexShader.hlsl" />
     <VertexShader Include="Content\Shaders\VPRTVertexShader.hlsl" />
-    <GeometryShader Include="Content\Shaders\Camera Testing\GeometryShader.hlsl">
-      <EntryPointName>main</EntryPointName>
-    </GeometryShader>
     <PixelShader Include="Content\Shaders\Camera Testing\PixelShader.hlsl">
       <EntryPointName>main</EntryPointName>
     </PixelShader>
-    <VertexShader Include="Content\Shaders\Camera Testing\VertexShader.hlsl">
-      <EntryPointName>main</EntryPointName>
-    </VertexShader>
     <VertexShader Include="Content\Shaders\Camera Testing\VprtVertexShader.hlsl">
       <EntryPointName>main</EntryPointName>
     </VertexShader>
     <VertexShader Include="Content\Shaders\Mesh Testing\VprtVertexShader.hlsl" />
-    <VertexShader Include="Content\Shaders\Mesh Testing\VertexShader.hlsl" />
     <PixelShader Include="Content\Shaders\Mesh Testing\PixelShader.hlsl" />
-    <GeometryShader Include="Content\Shaders\Mesh Testing\GeometryShader.hlsl" />
   </ItemGroup>
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>

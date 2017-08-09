@@ -1,4 +1,5 @@
 ﻿using System.Numerics;
+using System.Reflection;
 
 namespace Realistic_Hololens_Rendering.Content
 {
@@ -19,6 +20,32 @@ namespace Realistic_Hololens_Rendering.Content
     internal struct CameraConstantBuffer
     {
         public Matrix4x4 ViewProjection;
+    }
+
+    internal struct CubeArrayBuffer
+    {
+        public Matrix4x4 ViewProjection0;
+        public Matrix4x4 ViewProjection1;
+        public Matrix4x4 ViewProjection2;
+        public Matrix4x4 ViewProjection3;
+        public Matrix4x4 ViewProjection4;
+        public Matrix4x4 ViewProjection5;
+
+        public Matrix4x4 this[int index]
+        {
+            set
+            {
+                switch (index)
+                {
+                    case 0: ViewProjection0 = value; break;
+                    case 1: ViewProjection1 = value; break;
+                    case 2: ViewProjection2 = value; break;
+                    case 3: ViewProjection3 = value; break;
+                    case 4: ViewProjection4 = value; break;
+                    case 5: ViewProjection5 = value; break;
+                }
+            }
+        }
     }
 
     /// <summary>

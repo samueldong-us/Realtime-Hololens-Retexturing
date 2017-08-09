@@ -317,7 +317,7 @@ namespace Realistic_Hololens_Rendering
                     {
                         // Draw the sample hologram.
                         //spinningCubeRenderer.Render();
-                        cameraTestRenderer.Render();
+                        // cameraTestRenderer.Render();
                         meshTestRenderer.Render();
                     }
 #endif

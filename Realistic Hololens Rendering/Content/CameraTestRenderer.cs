@@ -16,8 +16,7 @@ namespace Realistic_Hololens_Rendering.Content
         #endregion Dependent Objects
 
         #region DirectX Objects
-
-        private SharpDX.Direct3D11.GeometryShader geometryShader;
+        
         private SharpDX.Direct3D11.Buffer indexBuffer;
         private SharpDX.Direct3D11.InputLayout inputLayout;
         private SharpDX.Direct3D11.Buffer modelConstantBuffer;
@@ -46,7 +45,7 @@ namespace Realistic_Hololens_Rendering.Content
             ReleaseDeviceDependentResources();
 
             var folder = Windows.ApplicationModel.Package.Current.InstalledLocation;
-            var vertexShaderFilename = deviceResources.D3DDeviceSupportsVprt ? @"Content\Shaders\Camera Testing\VprtVertexShader.cso" : @"Content\Shaders\Camera Testing\VertexShader.cso";
+            var vertexShaderFilename = @"Content\Shaders\Camera Testing\VprtVertexShader.cso";
             var vertexShaderBytecode = await DirectXHelper.ReadDataAsync(await folder.GetFileAsync(vertexShaderFilename));
             vertexShader = ToDispose(new SharpDX.Direct3D11.VertexShader(deviceResources.D3DDevice, vertexShaderBytecode));
 
@@ -57,12 +56,6 @@ namespace Realistic_Hololens_Rendering.Content
             };
 
             inputLayout = ToDispose(new SharpDX.Direct3D11.InputLayout(deviceResources.D3DDevice, vertexShaderBytecode, vertexDescription));
-
-            if (!deviceResources.D3DDeviceSupportsVprt)
-            {
-                var geometryShaderBytecode = await DirectXHelper.ReadDataAsync(await folder.GetFileAsync(@"Content\Shaders\Camera Testing\GeometryShader.cso"));
-                geometryShader = ToDispose(new SharpDX.Direct3D11.GeometryShader(deviceResources.D3DDevice, geometryShaderBytecode));
-            }
 
             var pixelShaderBytecode = await DirectXHelper.ReadDataAsync(await folder.GetFileAsync(@"Content\Shaders\Camera Testing\PixelShader.cso"));
             pixelShader = ToDispose(new SharpDX.Direct3D11.PixelShader(deviceResources.D3DDevice, pixelShaderBytecode));
@@ -100,7 +93,6 @@ namespace Realistic_Hololens_Rendering.Content
             RemoveAndDispose(ref vertexShader);
             RemoveAndDispose(ref inputLayout);
             RemoveAndDispose(ref pixelShader);
-            RemoveAndDispose(ref geometryShader);
             RemoveAndDispose(ref modelConstantBuffer);
             RemoveAndDispose(ref vertexBuffer);
             RemoveAndDispose(ref indexBuffer);
@@ -136,10 +128,6 @@ namespace Realistic_Hololens_Rendering.Content
 
             context.VertexShader.SetShader(vertexShader, null, 0);
             context.VertexShader.SetConstantBuffers(0, modelConstantBuffer);
-            if (!deviceResources.D3DDeviceSupportsVprt)
-            {
-                context.GeometryShader.SetShader(geometryShader, null, 0);
-            }
             context.PixelShader.SetShader(pixelShader, null, 0);
             var cameraTexture = physicalCamera.AcquireTexture();
             if (cameraTexture == null)

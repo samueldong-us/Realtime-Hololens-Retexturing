@@ -2,23 +2,12 @@ struct PixelShaderInput
 {
 	min16float4 Position : SV_POSITION;
 	min16float4 Normal : NORMAL;
-	min16float3 WorldPosition : POSITION;
-	// min16float2 UV : TEXCOORD;
+	min16float2 UV : TEXCOORD;
 };
 
-/*
 Texture2D<uint> LuminanceTexture : register(t0);
 Texture2D<uint2> ChrominanceTexture : register(t1);
-*/
 
-TextureCube CubeMap : register(t0);
-
-SamplerState CubeSamplerState
-{
-	Filter = ANISOTROPIC;
-};
-
-/*
 min16float4 YuvToRgb(min16float2 textureUV)
 {
 	int3 location = int3(0, 0, 0);
@@ -36,11 +25,14 @@ min16float4 YuvToRgb(min16float2 textureUV)
 	rgb.x = max(0, min(255, r));
 	rgb.y = max(0, min(255, g));
 	rgb.z = max(0, min(255, b));
+	if (textureUV.x > 1.0 || textureUV.x < 0.0 || textureUV.y > 1.0 || textureUV.y < 0.0)
+	{
+		discard;
+	}
 	return rgb / 255.0;
 }
-*/
 
 min16float4 main(PixelShaderInput input) : SV_TARGET
 {
-	return CubeMap.Sample(CubeSamplerState, input.WorldPosition);
+	return YuvToRgb(input.UV);
 }

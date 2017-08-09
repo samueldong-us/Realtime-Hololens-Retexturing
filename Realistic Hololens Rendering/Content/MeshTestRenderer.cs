@@ -12,9 +12,9 @@ namespace Realistic_Hololens_Rendering.Content
     {
         private VertexShader VertexShader;
         private PixelShader PixelShader;
-        private GeometryShader GeometryShader;
+        private VertexShader CubeVertexShader;
+        private PixelShader CubePixelShader;
         private SharpDX.Direct3D11.Buffer CameraConstantBuffer;
-        
 
         private bool Active;
         private DeviceResources DeviceResources;
@@ -23,12 +23,22 @@ namespace Realistic_Hololens_Rendering.Content
         private PhysicalCamera PhysicalCamera;
         private CameraConstantBuffer CameraData = new CameraConstantBuffer();
         private SpatialCoordinateSystem CoordinateSystem;
+        private RenderableCubemap CubeMap;
+
+        private bool CubeMapUpdateRequired;
 
         public MeshTestRenderer(DeviceResources deviceResources, PhysicalCamera physicalCamera)
         {
             DeviceResources = deviceResources;
             PhysicalCamera = physicalCamera;
+            PhysicalCamera.FrameUpdated += OnSteadyFrameAvailable;
             Active = false;
+            CubeMapUpdateRequired = false;
+        }
+
+        private void OnSteadyFrameAvailable()
+        {
+            CubeMapUpdateRequired = true;
         }
 
         public async Task Initialize(SpatialCoordinateSystem coordinateSystem)
@@ -67,48 +77,65 @@ namespace Realistic_Hololens_Rendering.Content
             var device = DeviceResources.D3DDevice;
             var context = DeviceResources.D3DDeviceContext;
 
-            CameraData.ViewProjection = Matrix4x4.Transpose(PhysicalCamera.GetWorldToCameraMatrix(CoordinateSystem));
-            context.UpdateSubresource(ref CameraData, CameraConstantBuffer);
-
             context.VertexShader.Set(VertexShader);
-            context.VertexShader.SetConstantBuffer(2, CameraConstantBuffer);
-            if (!DeviceResources.D3DDeviceSupportsVprt)
-            {
-                context.GeometryShader.Set(GeometryShader);
-            }
             context.PixelShader.Set(PixelShader);
-            var cameraTexture = PhysicalCamera.AcquireTexture();
-            if (cameraTexture == null)
-                return;
-            var luminanceView = new ShaderResourceView(device, cameraTexture, new ShaderResourceViewDescription()
-            {
-                Format = SharpDX.DXGI.Format.R8_UInt,
-                Dimension = SharpDX.Direct3D.ShaderResourceViewDimension.Texture2D,
-                Texture2D = new ShaderResourceViewDescription.Texture2DResource()
-                {
-                    MipLevels = 1
-                }
-            });
-            var chrominanceView = new ShaderResourceView(device, cameraTexture, new ShaderResourceViewDescription()
-            {
-                Format = SharpDX.DXGI.Format.R8G8_UInt,
-                Dimension = SharpDX.Direct3D.ShaderResourceViewDimension.Texture2D,
-                Texture2D = new ShaderResourceViewDescription.Texture2DResource()
-                {
-                    MipLevels = 1
-                }
-            });
-            context.PixelShader.SetShaderResource(0, luminanceView);
-            context.PixelShader.SetShaderResource(1, chrominanceView);
+            context.PixelShader.SetShaderResource(0, CubeMap.ShaderResourceView);
 
             Meshes.Draw(numberOfIndices =>
             {
                 context.DrawIndexedInstanced(numberOfIndices, 2, 0, 0, 0);
             });
 
-            luminanceView.Dispose();
-            chrominanceView.Dispose();
-            PhysicalCamera.ReleaseTexture();
+            context.PixelShader.SetShaderResource(0, null);
+
+            if (CubeMapUpdateRequired)
+            {
+                CameraData.ViewProjection = Matrix4x4.Transpose(PhysicalCamera.GetWorldToCameraMatrix(CoordinateSystem));
+                context.UpdateSubresource(ref CameraData, CameraConstantBuffer);
+
+                context.VertexShader.Set(CubeVertexShader);
+                context.VertexShader.SetConstantBuffer(1, CubeMap.CubeArrayBuffer);
+                context.VertexShader.SetConstantBuffer(2, CameraConstantBuffer);
+                context.PixelShader.Set(CubePixelShader);
+                var cameraTexture = PhysicalCamera.AcquireTexture();
+                if (cameraTexture == null)
+                    return;
+                var luminanceView = new ShaderResourceView(device, cameraTexture, new ShaderResourceViewDescription()
+                {
+                    Format = SharpDX.DXGI.Format.R8_UInt,
+                    Dimension = SharpDX.Direct3D.ShaderResourceViewDimension.Texture2D,
+                    Texture2D = new ShaderResourceViewDescription.Texture2DResource()
+                    {
+                        MipLevels = 1
+                    }
+                });
+                var chrominanceView = new ShaderResourceView(device, cameraTexture, new ShaderResourceViewDescription()
+                {
+                    Format = SharpDX.DXGI.Format.R8G8_UInt,
+                    Dimension = SharpDX.Direct3D.ShaderResourceViewDimension.Texture2D,
+                    Texture2D = new ShaderResourceViewDescription.Texture2DResource()
+                    {
+                        MipLevels = 1
+                    }
+                });
+                context.PixelShader.SetShaderResource(0, luminanceView);
+                context.PixelShader.SetShaderResource(1, chrominanceView);
+
+                context.Rasterizer.SetViewport(0.0f, 0.0f, RenderableCubemap.Resolution, RenderableCubemap.Resolution);
+                context.OutputMerger.SetRenderTargets(CubeMap.DepthStencilView, CubeMap.RenderTargetView);
+                context.ClearDepthStencilView(CubeMap.DepthStencilView, DepthStencilClearFlags.Depth, 1.0f, 0);
+
+                Meshes.Draw(numberOfIndices =>
+                {
+                    context.DrawIndexedInstanced(numberOfIndices, 6, 0, 0, 0);
+                });
+
+                luminanceView.Dispose();
+                chrominanceView.Dispose();
+                PhysicalCamera.ReleaseTexture();
+
+                CubeMapUpdateRequired = false;
+            }
         }
 
         private async Task CreateDeviceDenpendantResources()
@@ -116,32 +143,34 @@ namespace Realistic_Hololens_Rendering.Content
             ReleaseDeviceDependentResources();
 
             var folder = Windows.ApplicationModel.Package.Current.InstalledLocation;
-            var vertexShaderFilename = DeviceResources.D3DDeviceSupportsVprt ? @"Content\Shaders\Mesh Testing\VprtVertexShader.cso" : @"Content\Shaders\Mesh Testing\VertexShader.cso";
+            var vertexShaderFilename = @"Content\Shaders\Mesh Testing\VprtVertexShader.cso";
             var vertexShaderFile = await folder.GetFileAsync(vertexShaderFilename);
             var vertexShaderBytecode = await DirectXHelper.ReadDataAsync(vertexShaderFile);
             var device = DeviceResources.D3DDevice;
             VertexShader = ToDispose(new VertexShader(device, vertexShaderBytecode));
 
-            if (!DeviceResources.D3DDeviceSupportsVprt)
-            {
-                var geometryShaderBytecode = await DirectXHelper.ReadDataAsync(await folder.GetFileAsync(@"Content\Shaders\Mesh Testing\GeometryShader.cso"));
-                GeometryShader = ToDispose(new GeometryShader(device, geometryShaderBytecode));
-            }
-
             var pixelShaderBytecode = await DirectXHelper.ReadDataAsync(await folder.GetFileAsync(@"Content\Shaders\Mesh Testing\PixelShader.cso"));
             PixelShader = ToDispose(new PixelShader(device, pixelShaderBytecode));
 
+            var cubeVertexShaderBytecode = await DirectXHelper.ReadDataAsync(await folder.GetFileAsync(@"Content\Shaders\Cube Rendering\VprtVertexShader.cso"));
+            CubeVertexShader = ToDispose(new VertexShader(device, cubeVertexShaderBytecode));
+            var cubePixelShaderBytecode = await DirectXHelper.ReadDataAsync(await folder.GetFileAsync(@"Content\Shaders\Cube Rendering\PixelShader.cso"));
+            CubePixelShader = ToDispose(new PixelShader(device, cubePixelShaderBytecode));
+
             CameraConstantBuffer = ToDispose(SharpDX.Direct3D11.Buffer.Create(device, BindFlags.ConstantBuffer, ref CameraData));
 
-            Meshes = new MeshCollection(DeviceResources, vertexShaderBytecode);
+            Meshes = new MeshCollection(DeviceResources, cubeVertexShaderBytecode);
+            CubeMap = new RenderableCubemap(DeviceResources, Vector3.Zero);
+            CubeMap.Initialize();
         }
 
         private void ReleaseDeviceDependentResources()
         {
             Active = false;
             RemoveAndDispose(ref VertexShader);
-            RemoveAndDispose(ref GeometryShader);
             RemoveAndDispose(ref PixelShader);
+            RemoveAndDispose(ref CubeVertexShader);
+            RemoveAndDispose(ref CubePixelShader);
             RemoveAndDispose(ref CameraConstantBuffer);
         }
 
