@@ -60,12 +60,12 @@ namespace Realistic_Hololens_Rendering.Content
             var pixelShaderBytecode = await DirectXHelper.ReadDataAsync(await folder.GetFileAsync(@"Content\Shaders\Camera Testing\PixelShader.cso"));
             pixelShader = ToDispose(new SharpDX.Direct3D11.PixelShader(deviceResources.D3DDevice, pixelShaderBytecode));
 
-            VertexPositionUv[] vertices =
+            VertexPositionUV[] vertices =
             {
-                new VertexPositionUv(new Vector3(-0.2f, -0.2f, 0.0f), new Vector2(0.0f, 0.0f)),
-                new VertexPositionUv(new Vector3(0.2f, -0.2f, 0.0f), new Vector2(1.0f, 0.0f)),
-                new VertexPositionUv(new Vector3(0.2f, 0.2f, 0.0f), new Vector2(1.0f, 1.0f)),
-                new VertexPositionUv(new Vector3(-0.2f, 0.2f, 0.0f), new Vector2(0.0f, 1.0f))
+                new VertexPositionUV(new Vector3(-0.2f, -0.2f, 0.0f), new Vector2(0.0f, 0.0f)),
+                new VertexPositionUV(new Vector3(0.2f, -0.2f, 0.0f), new Vector2(1.0f, 0.0f)),
+                new VertexPositionUV(new Vector3(0.2f, 0.2f, 0.0f), new Vector2(1.0f, 1.0f)),
+                new VertexPositionUV(new Vector3(-0.2f, 0.2f, 0.0f), new Vector2(0.0f, 1.0f))
             };
             vertexBuffer = ToDispose(SharpDX.Direct3D11.Buffer.Create(deviceResources.D3DDevice, SharpDX.Direct3D11.BindFlags.VertexBuffer, vertices));
 
@@ -118,7 +118,7 @@ namespace Realistic_Hololens_Rendering.Content
 
             var device = deviceResources.D3DDevice;
             var context = deviceResources.D3DDeviceContext;
-            int stride = SharpDX.Utilities.SizeOf<VertexPositionUv>();
+            int stride = SharpDX.Utilities.SizeOf<VertexPositionUV>();
             int offset = 0;
             var bufferBinding = new SharpDX.Direct3D11.VertexBufferBinding(vertexBuffer, stride, offset);
             context.InputAssembler.SetVertexBuffers(0, bufferBinding);

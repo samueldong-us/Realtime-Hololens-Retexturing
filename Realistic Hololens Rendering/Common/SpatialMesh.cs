@@ -21,6 +21,7 @@ namespace Realistic_Hololens_Rendering.Common
 
         #endregion DirectX Objects
 
+        public int NumberOfIndices { get => (int)(Mesh?.TriangleIndices?.ElementCount ?? 0); }
         private SpatialSurfaceMesh Mesh;
         private TransformConstantBuffer TransformData = new TransformConstantBuffer();
         private bool Ready;

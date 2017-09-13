@@ -34,10 +34,11 @@ namespace Realistic_Hololens_Rendering
 #if DRAW_SAMPLE_CONTENT
         // Renders a colorful holographic cube that's 20 centimeters wide. This sample content
         // is used to demonstrate world-locked rendering.
-        private SpinningCubeRenderer        spinningCubeRenderer;
+        private SpinningCubeRenderer spinningCubeRenderer;
         private CameraTestRenderer cameraTestRenderer;
         private MeshTestRenderer meshTestRenderer;
         private PhysicalCamera physicalCamera;
+        private MeshCollectionTexturer meshCollectionTexturer;
         
         private SpatialInputHandler         spatialInputHandler;
 #endif
@@ -83,8 +84,9 @@ namespace Realistic_Hololens_Rendering
             spinningCubeRenderer = new SpinningCubeRenderer(deviceResources);
             physicalCamera = new PhysicalCamera(deviceResources.D3DDevice, false);
             physicalCamera.Initialize();
-            cameraTestRenderer = new CameraTestRenderer(deviceResources, physicalCamera);
-            meshTestRenderer = new MeshTestRenderer(deviceResources, physicalCamera);
+            // cameraTestRenderer = new CameraTestRenderer(deviceResources, physicalCamera);
+            // meshTestRenderer = new MeshTestRenderer(deviceResources, physicalCamera);
+            meshCollectionTexturer = new MeshCollectionTexturer(deviceResources, physicalCamera);
 
             spatialInputHandler = new SpatialInputHandler();
 #endif
@@ -118,7 +120,9 @@ namespace Realistic_Hololens_Rendering
             // with the origin placed at the device's position as the app is launched.
             referenceFrame = locator.CreateStationaryFrameOfReferenceAtCurrentLocation();
 
-            meshTestRenderer.Initialize(referenceFrame.CoordinateSystem);
+            //meshTestRenderer.Initialize(referenceFrame.CoordinateSystem);
+            meshCollectionTexturer.Initialize(referenceFrame.CoordinateSystem);
+
             // Notes on spatial tracking APIs:
             // * Stationary reference frames are designed to provide a best-fit position relative to the
             //   overall space. Individual positions within that reference frame are allowed to drift slightly
@@ -180,8 +184,8 @@ namespace Realistic_Hololens_Rendering
                 spinningCubeRenderer.PositionHologram(
                     pointerState.TryGetPointerPose(currentCoordinateSystem)
                     );
-                cameraTestRenderer.PositionHologram(pointerState.TryGetPointerPose(currentCoordinateSystem));
-                meshTestRenderer.Paused = !meshTestRenderer.Paused;
+                // cameraTestRenderer.PositionHologram(pointerState.TryGetPointerPose(currentCoordinateSystem));
+                // meshCollectionTexturer.Paused = !meshCollectionTexturer.Paused;
             }
 #endif
 
@@ -197,8 +201,9 @@ namespace Realistic_Hololens_Rendering
 
 #if DRAW_SAMPLE_CONTENT
                 spinningCubeRenderer.Update(timer);
-                cameraTestRenderer.Update(timer);
-                meshTestRenderer.UpdateTransform(currentCoordinateSystem);
+                // cameraTestRenderer.Update(timer);
+                // meshTestRenderer.UpdateTransform(currentCoordinateSystem);
+                meshCollectionTexturer.UpdateTransform(currentCoordinateSystem);
 #endif
             });
 
@@ -319,7 +324,8 @@ namespace Realistic_Hololens_Rendering
                         // Draw the sample hologram.
                         //spinningCubeRenderer.Render();
                         // cameraTestRenderer.Render();
-                        meshTestRenderer.Render();
+                        // meshTestRenderer.Render();
+                        meshCollectionTexturer.Render();
                     }
 #endif
                     atLeastOneCameraRendered = true;
@@ -358,7 +364,7 @@ namespace Realistic_Hololens_Rendering
 
 #if DRAW_SAMPLE_CONTENT
             spinningCubeRenderer.ReleaseDeviceDependentResources();
-            cameraTestRenderer.ReleaseDeviceDependentResources();
+            // cameraTestRenderer.ReleaseDeviceDependentResources();
 #endif
 
         }
@@ -370,7 +376,7 @@ namespace Realistic_Hololens_Rendering
         {
 #if DRAW_SAMPLE_CONTENT
             spinningCubeRenderer.CreateDeviceDependentResourcesAsync();
-            cameraTestRenderer.CreateDeviceDependentResourcesAsync();
+            // cameraTestRenderer.CreateDeviceDependentResourcesAsync();
 #endif
         }
 

@@ -14,6 +14,8 @@ namespace Realistic_Hololens_Rendering.Common
         private const float MinimumCosine = 0.9999f;
         private const int LockTimeout = 100;
         private const long SharedTextureKey = 0L;
+        private const float NearPlane = 0.05f;
+        private const float FarPlane = 10.0f;
         private Texture2D cameraTexture;
         private SpatialCoordinateSystem CoordinateSystem;
         private Device device;
@@ -25,6 +27,8 @@ namespace Realistic_Hololens_Rendering.Common
         private Matrix4x4 ViewMatrix;
         private Matrix4x4 LastViewMatrix;
         private bool AllowUnstableFrames;
+        public int Width { get; private set; }
+        public int Height { get; private set; }
         public bool Ready { get; private set; }
         public bool Stable { get; private set; }
         public Vector4 Forward { get; private set; }
@@ -38,6 +42,8 @@ namespace Realistic_Hololens_Rendering.Common
             AllowUnstableFrames = allowUnstableFrames;
             mediaCapture = new MediaCapture();
             FrameUpdated += () => {};
+            Width = 1408;
+            Height = 792;
         }
 
         public Texture2D AcquireTexture()
@@ -109,6 +115,8 @@ namespace Realistic_Hololens_Rendering.Common
                 CoordinateSystem = reference.Properties[InteropStatics.MFSampleExtensionSpatialCameraCoordinateSystem] as SpatialCoordinateSystem;
                 var newViewMatrix = (reference.Properties[InteropStatics.MFSampleExtensionSpatialCameraViewTransform] as byte[]).ToMatrix4x4();
                 ProjectionMatrix = (reference.Properties[InteropStatics.MFSampleExtensionSpatialCameraProjectionTransform] as byte[]).ToMatrix4x4();
+                ProjectionMatrix.M33 = FarPlane / (NearPlane - FarPlane);
+                ProjectionMatrix.M43 = NearPlane * FarPlane / (NearPlane - FarPlane);
                 UpdateStability(newViewMatrix);
                 LastViewMatrix = newViewMatrix;
             }

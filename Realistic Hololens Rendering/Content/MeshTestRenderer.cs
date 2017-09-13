@@ -45,7 +45,7 @@ namespace Realistic_Hololens_Rendering.Content
             CubeMapUpdateRequired = true;
         }
 
-        public async Task Initialize(SpatialCoordinateSystem coordinateSystem)
+        public async void Initialize(SpatialCoordinateSystem coordinateSystem)
         {
             CoordinateSystem = coordinateSystem;
             var requestStatus = await SpatialSurfaceObserver.RequestAccessAsync();

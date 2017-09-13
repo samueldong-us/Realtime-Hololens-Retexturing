@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Windows.Storage;
 using System.Numerics;
+using SharpDX.Direct3D11;
 
 namespace Realistic_Hololens_Rendering.Common
 {
@@ -32,6 +33,12 @@ namespace Realistic_Hololens_Rendering.Common
         internal static double ConvertDipsToPixels(double dips, double dpi)
         {
             return Math.Floor(dips * dpi / DipsPerInch + 0.5f); // Round to nearest integer.
+        }
+
+        internal static async Task<T> LoadShader<T>(Device device, StorageFolder folder, string filename)
+        {
+            var shaderBytecode = await ReadDataAsync(await folder.GetFileAsync(filename));
+            return (T)Activator.CreateInstance(typeof(T), device, shaderBytecode, (ClassLinkage)null);
         }
 
 #if DEBUG

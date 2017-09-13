@@ -11,6 +11,11 @@ namespace Realistic_Hololens_Rendering.Content
         public Matrix4x4 model;
     }
 
+    internal struct ScreenPositionBuffer
+    {
+        public Vector4 Bounds;
+    }
+
     internal struct TransformConstantBuffer
     {
         public Matrix4x4 VertexTransform;
@@ -25,6 +30,21 @@ namespace Realistic_Hololens_Rendering.Content
     internal struct Vector4ConstantBuffer
     {
         public Vector4 Vector;
+    }
+
+    internal struct UpdateLayoutConstantBuffer
+    {
+        public uint OldOffset;
+        public uint NewOffset;
+        public uint OldSize;
+        public uint NewSize;
+    }
+
+    internal struct LayoutConstantBuffer
+    {
+        public uint Offset;
+        public uint Size;
+        public long Padding;
     }
 
     internal struct CubeArrayBuffer
@@ -68,12 +88,12 @@ namespace Realistic_Hololens_Rendering.Content
         public Vector3 color;
     }
 
-    internal struct VertexPositionUv
+    internal struct VertexPositionUV
     {
         public Vector3 position;
         public Vector2 uv;
 
-        public VertexPositionUv(Vector3 position, Vector2 uv)
+        public VertexPositionUV(Vector3 position, Vector2 uv)
         {
             this.position = position;
             this.uv = uv;

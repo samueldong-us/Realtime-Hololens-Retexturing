@@ -45,13 +45,16 @@
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common\MeshTextureSet.cs" />
     <Compile Include="Common\RenderableCubemap.cs" />
     <Compile Include="Common\SpatialMesh.cs" />
     <Compile Include="Common\MeshCollection.cs" />
     <Compile Include="Common\PhysicalCamera.cs" />
     <Compile Include="Common\Utilities.cs" />
     <Compile Include="Content\CameraTestRenderer.cs" />
+    <Compile Include="Content\MeshCollectionTexturer.cs" />
     <Compile Include="Content\MeshTestRenderer.cs" />
+    <Compile Include="Content\TextureDebugRenderer.cs" />
     <Compile Include="Realistic_Hololens_RenderingMain.cs" />
     <Compile Include="AppView.cs" />
     <Compile Include="AppViewSource.cs" />
@@ -71,7 +74,6 @@
     <AppxManifest Include="Package.appxmanifest">
       <SubType>Designer</SubType>
     </AppxManifest>
-    <None Include="Realistic Hololens Rendering_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
@@ -81,6 +83,21 @@
     <Content Include="Assets\Square44x44Logo.targetsize-24_altform-unplated.png" />
     <Content Include="Assets\StoreLogo.png" />
     <Content Include="Assets\Wide310x150Logo.scale-200.png" />
+    <PixelShader Include="Content\Shaders\Mesh Projection\DepthPrepassPixelShader.hlsl" />
+    <PixelShader Include="Content\Shaders\Mesh Projection\PixelShaderDebug.hlsl" />
+    <GeometryShader Include="Content\Shaders\Mesh Projection\GeometryShaderDebug.hlsl" />
+    <VertexShader Include="Content\Shaders\Texture Debug\VertexShader.hlsl" />
+    <PixelShader Include="Content\Shaders\Texture Debug\PixelShader.hlsl" />
+    <VertexShader Include="Content\Shaders\Mesh Rendering\VertexShader.hlsl" />
+    <PixelShader Include="Content\Shaders\Mesh Rendering\PixelShader.hlsl" />
+    <GeometryShader Include="Content\Shaders\Mesh Rendering\GeometryShader.hlsl" />
+    <VertexShader Include="Content\Shaders\Mesh Projection\DepthPrepassVertexShader.hlsl" />
+    <VertexShader Include="Content\Shaders\Mesh Projection\VertexShader.hlsl" />
+    <PixelShader Include="Content\Shaders\Mesh Projection\PixelShader.hlsl" />
+    <GeometryShader Include="Content\Shaders\Mesh Projection\GeometryShader.hlsl" />
+    <GeometryShader Include="Content\Shaders\Mesh Updating\GeometryShader.hlsl" />
+    <VertexShader Include="Content\Shaders\Mesh Updating\VertexShader.hlsl" />
+    <PixelShader Include="Content\Shaders\Mesh Updating\PixelShader.hlsl" />
     <VertexShader Include="Content\Shaders\Cube Rendering\VprtVertexShader.hlsl" />
     <PixelShader Include="Content\Shaders\Cube Rendering\PixelShader.hlsl" />
   </ItemGroup>
@@ -96,6 +113,7 @@
     <VertexShader Include="Content\Shaders\Mesh Testing\VprtVertexShader.hlsl" />
     <PixelShader Include="Content\Shaders\Mesh Testing\PixelShader.hlsl" />
   </ItemGroup>
+  <ItemGroup />
   <PropertyGroup Condition=" '$(VisualStudioVersion)' == '' or '$(VisualStudioVersion)' &lt; '14.0' ">
     <VisualStudioVersion>14.0</VisualStudioVersion>
   </PropertyGroup>
