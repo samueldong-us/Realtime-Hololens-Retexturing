@@ -18,17 +18,19 @@ namespace Realistic_Hololens_Rendering.Content
 
         private DeviceResources Resources;
 
-        public TextureDebugRenderer(DeviceResources resources, Vector4 bounds)
+        public TextureDebugRenderer(DeviceResources resources)
         {
             Resources = resources;
-            ScreenPositionData.Bounds = bounds;
             CreateDeviceDependentResourcesAsync();
         }
 
-        public void Render(ShaderResourceView texture)
+        public void Render(ShaderResourceView texture, Vector4 bounds)
         {
             var device = Resources.D3DDevice;
             var context = Resources.D3DDeviceContext;
+
+            ScreenPositionData.Bounds = bounds;
+            context.UpdateSubresource(ref ScreenPositionData, ScreenPositionBuffer);
 
             context.VertexShader.Set(VertexShader);
             context.VertexShader.SetConstantBuffer(0, ScreenPositionBuffer);

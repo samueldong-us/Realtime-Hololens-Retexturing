@@ -1,4 +1,4 @@
-#define Bias 0.000
+#define Bias 0.0005
 
 struct PixelShaderInput
 {
@@ -47,21 +47,16 @@ PixelShaderOutput main(PixelShaderInput input)
 		discard;
 	}
 	lightSpace.x = (lightSpace.x + 1.0) / 2.0;
-	lightSpace.y = (lightSpace.y + 1.0) / -2.0;
+	lightSpace.y = (-lightSpace.y + 1.0) / 2.0;
 	float shadowDepth = Shadow.Sample(TextureSamplerState, lightSpace.xy);
-	lightSpace.y *= -1;
-	if (shadowDepth < lightSpace.z + Bias)
+	lightSpace.y = 1.0 - lightSpace.y;
+	if (shadowDepth < lightSpace.z - Bias)
 	{
-		// discard;
+		discard;
 	}
 
 	PixelShaderOutput output;
 	output.Color = min16float4(YuvToRgb(lightSpace.xy), 1.0);
-    /*
-	float normalized = shadowDepth * 2.0 - 1.0;
-	normalized = (2.0 * 0.05 * 10.0) / (10.0 + 0.05 - normalized * (10.0 - 0.05));
-	output.Color = min16float4(1.0, normalized / 10.0, 1.0, 1.0);
-	*/
 	// output.QualityAndTime = min16float2(0.0, 0.0);
 	return output;
 }
@@ -83,7 +78,7 @@ min16float3 YuvToRgb(min16float2 textureUV)
 	rgb.x = max(0, min(255, r));
 	rgb.y = max(0, min(255, g));
 	rgb.z = max(0, min(255, b));
-	bool invalid = (textureUV.x > 1.0 || textureUV.x < 0.0 || textureUV.y > 1.0 || textureUV.y < 0.0);
+	bool invalid = (location.x < 0 || location.x >= 1408 || location.y < 0 || location.y >= 792);
 	if (invalid)
 	{
 		discard;

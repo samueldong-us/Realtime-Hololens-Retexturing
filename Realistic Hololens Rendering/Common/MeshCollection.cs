@@ -8,7 +8,7 @@ namespace Realistic_Hololens_Rendering.Common
 {
     internal class MeshCollection
     {
-        public delegate void OnMeshChangedHandler(Dictionary<Guid, int> oldOffsets, int oldCount);
+        public delegate void OnMeshChangedHandler(Dictionary<Guid, int> oldOffsets, int oldCount, Dictionary<Guid, SpatialSurfaceInfo> surfaces);
         public event OnMeshChangedHandler OnMeshChanged;
         public int TotalNumberOfTriangles { get => Meshes.Sum(pair => pair.Value.NumberOfIndices) / 3; }
         private object MeshLock = new object();
@@ -21,7 +21,7 @@ namespace Realistic_Hololens_Rendering.Common
             Resources = resources;
             Meshes = new SortedDictionary<Guid, SpatialMesh>();
             VertexShaderBytecode = vertexShaderBytecode;
-            OnMeshChanged += (_, __) => { };
+            OnMeshChanged += (_, __, ___) => { };
         }
 
         public void Draw(Action<int> drawingFunction, Func<Guid, int, bool> preprocessingFunction = null)
@@ -52,7 +52,12 @@ namespace Realistic_Hololens_Rendering.Common
         public void ProcessSurfaces(IReadOnlyDictionary<Guid, SpatialSurfaceInfo> surfaces)
         {
             var oldOffsets = CalculateOffsets();
-            var oldCount = Meshes.Sum(pair => pair.Value.NumberOfIndices);
+            var oldCount = TotalNumberOfTriangles;
+            OnMeshChanged(oldOffsets, oldCount, surfaces.ToDictionary(pair => pair.Key, pair => pair.Value));
+        }
+
+        public void UpdateMesh(IReadOnlyDictionary<Guid, SpatialSurfaceInfo> surfaces)
+        {
             lock (MeshLock)
             {
                 foreach (var guid in surfaces.Keys)
@@ -60,8 +65,8 @@ namespace Realistic_Hololens_Rendering.Common
                     if (!Meshes.ContainsKey(guid))
                     {
                         Meshes[guid] = new SpatialMesh(Resources);
+                        Meshes[guid].ProcessMeshData(surfaces[guid], VertexShaderBytecode);
                     }
-                    Meshes[guid].ProcessMeshData(surfaces[guid], VertexShaderBytecode);
                 }
 
                 var nonexistantGuids = Meshes.Keys.Except(surfaces.Keys).ToArray();
@@ -71,19 +76,21 @@ namespace Realistic_Hololens_Rendering.Common
                     Meshes.Remove(guid);
                 }
             }
-            OnMeshChanged(oldOffsets, oldCount);
         }
 
         private Dictionary<Guid, int> CalculateOffsets()
         {
-            var offsets = new Dictionary<Guid, int>();
-            int offset = 0;
-            foreach (var mesh in Meshes)
+            lock (MeshLock)
             {
-                offsets[mesh.Key] = offset;
-                offset += mesh.Value.NumberOfIndices / 3;
+                var offsets = new Dictionary<Guid, int>();
+                int offset = 0;
+                foreach (var mesh in Meshes)
+                {
+                    offsets[mesh.Key] = offset;
+                    offset += mesh.Value.NumberOfIndices / 3;
+                }
+                return offsets;
             }
-            return offsets;
         }
     }
 }

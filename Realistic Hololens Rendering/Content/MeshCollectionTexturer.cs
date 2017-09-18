@@ -54,19 +54,20 @@ namespace Realistic_Hololens_Rendering.Content
         private bool UpdateRequested;
         private Dictionary<Guid, int> PreviousOffsets;
         private int PreviousCount;
-        
+        private Dictionary<Guid, SpatialSurfaceInfo> Surfaces;
+
         private DeviceResources Resources;
         private PhysicalCamera Camera;
         private MeshCollection Meshes;
         private SpatialCoordinateSystem CoordinateSystem;
         private SpatialSurfaceObserver SurfaceObserver;
         private SpeechRecognizer SpeechRecognizer;
-        private object RenderingLock = new object();
 
         private TextureDebugRenderer TextureDebugger;
 
         private bool GeometryPaused;
         private bool CameraPaused;
+        private bool Debug;
 
         public MeshCollectionTexturer(DeviceResources resources, PhysicalCamera camera)
         {
@@ -75,8 +76,9 @@ namespace Realistic_Hololens_Rendering.Content
             Active = false;
             ProjectionRequested = false;
             UpdateRequested = false;
-            TextureDebugger = new TextureDebugRenderer(resources, new Vector4(-1.0f, -1.0f, 1.0f, 1.0f));
-            
+            Debug = false;
+            TextureDebugger = new TextureDebugRenderer(resources);
+
             Camera.FrameUpdated += RequestMeshProjection;
             MeshTextures = new[]
             {
@@ -94,7 +96,8 @@ namespace Realistic_Hololens_Rendering.Content
             var speechOptions = new SpeechRecognitionListConstraint(new[]
             {
                 "Toggle Camera",
-                "Toggle Geometry"
+                "Toggle Geometry",
+                "Toggle Debug"
             });
             SpeechRecognizer.Constraints.Add(speechOptions);
             var result = await SpeechRecognizer.CompileConstraintsAsync();
@@ -107,13 +110,16 @@ namespace Realistic_Hololens_Rendering.Content
 
         private void OnSpeechCommandDetected(SpeechContinuousRecognitionSession sender, SpeechContinuousRecognitionResultGeneratedEventArgs args)
         {
-            switch(args.Result.Text)
+            switch (args.Result.Text)
             {
                 case "Toggle Camera":
                     CameraPaused = !CameraPaused;
                     break;
                 case "Toggle Geometry":
                     GeometryPaused = !GeometryPaused;
+                    break;
+                case "Toggle Debug":
+                    Debug = !Debug;
                     break;
             }
         }
@@ -123,13 +129,14 @@ namespace Realistic_Hololens_Rendering.Content
             ProjectionRequested = true;
         }
 
-        private void RequestPackingUpdate(Dictionary<Guid, int> oldOffsets, int oldCount)
+        private void RequestPackingUpdate(Dictionary<Guid, int> oldOffsets, int oldCount, Dictionary<Guid, SpatialSurfaceInfo> surfaces)
         {
             if (!UpdateRequested)
             {
                 UpdateRequested = true;
                 PreviousOffsets = oldOffsets;
                 PreviousCount = oldCount;
+                Surfaces = surfaces;
             }
         }
 
@@ -145,7 +152,11 @@ namespace Realistic_Hololens_Rendering.Content
                 return;
 
             RenderMesh();
-            TextureDebugger.Render(DepthResource);
+            if (Debug)
+            {
+                TextureDebugger.Render(MeshTextures[CurrentTexture].ColorResourceView, new Vector4(-1.0f, -1.0f, 0.5f, 0.5f));
+                TextureDebugger.Render(MeshTextures[(CurrentTexture + 1) % 2].ColorResourceView, new Vector4(0.5f, -1.0f, 0.5f, 0.5f));
+            }
             if (ProjectionRequested && !CameraPaused)
             {
                 ProjectCameraTexture();
@@ -160,215 +171,211 @@ namespace Realistic_Hololens_Rendering.Content
 
         private void RenderMesh()
         {
-            lock (RenderingLock)
+            var device = Resources.D3DDevice;
+            var context = Resources.D3DDeviceContext;
+
+            var newTriangleCount = Meshes.TotalNumberOfTriangles;
+            var newNumberOfSide = (int)Math.Ceiling(Math.Sqrt(newTriangleCount / 2.0));
+
+            context.VertexShader.Set(RenderVertexShader);
+            context.GeometryShader.Set(RenderGeometryShader);
+            context.GeometryShader.SetConstantBuffer(3, LayoutConstantBuffer);
+            context.PixelShader.Set(RenderPixelShader);
+            context.PixelShader.SetShaderResource(0, MeshTextures[CurrentTexture].ColorResourceView);
+            context.PixelShader.SetSampler(0, new SamplerState(device, new SamplerStateDescription()
             {
-                var device = Resources.D3DDevice;
-                var context = Resources.D3DDeviceContext;
+                AddressU = TextureAddressMode.Clamp,
+                AddressV = TextureAddressMode.Clamp,
+                AddressW = TextureAddressMode.Clamp,
+                ComparisonFunction = Comparison.Equal,
+                Filter = Filter.MinMagLinearMipPoint
+            }));
 
-                var newTriangleCount = Meshes.TotalNumberOfTriangles;
-                var newNumberOfSide = (int)Math.Ceiling(Math.Sqrt(newTriangleCount / 2.0));
+            context.Rasterizer.State = new RasterizerState(device, new RasterizerStateDescription()
+            {
+                CullMode = CullMode.None,
+                FillMode = FillMode.Solid
+            });
 
-                context.VertexShader.Set(RenderVertexShader);
-                context.GeometryShader.Set(RenderGeometryShader);
-                context.GeometryShader.SetConstantBuffer(3, LayoutConstantBuffer);
-                context.PixelShader.Set(RenderPixelShader);
-                context.PixelShader.SetShaderResource(0, MeshTextures[CurrentTexture].ColorResourceView);
-                context.PixelShader.SetSampler(0, new SamplerState(device, new SamplerStateDescription()
-                {
-                    AddressU = TextureAddressMode.Clamp,
-                    AddressV = TextureAddressMode.Clamp,
-                    AddressW = TextureAddressMode.Clamp,
-                    ComparisonFunction = Comparison.Equal,
-                    Filter = Filter.MinMagLinearMipPoint
-                }));
+            int newOffset = 0;
+            Meshes.Draw(numberOfIndices =>
+            {
+                context.DrawIndexedInstanced(numberOfIndices, 2, 0, 0, 0);
+            },
+            (guid, numberOfIndices) =>
+            {
+                LayoutData.Offset = (uint)newOffset;
+                LayoutData.Size = (uint)newNumberOfSide;
+                newOffset += numberOfIndices / 3;
+                context.UpdateSubresource(ref LayoutData, LayoutConstantBuffer);
+                return true;
+            });
 
-                context.Rasterizer.State = new RasterizerState(device, new RasterizerStateDescription()
-                {
-                    CullMode = CullMode.None,
-                    FillMode = FillMode.Solid
-                });
-
-                int newOffset = 0;
-                Meshes.Draw(numberOfIndices =>
-                {
-                    context.DrawIndexedInstanced(numberOfIndices, 2, 0, 0, 0);
-                },
-                (guid, numberOfIndices) =>
-                {
-                    LayoutData.Offset = (uint)newOffset;
-                    LayoutData.Size = (uint)newNumberOfSide;
-                    newOffset += numberOfIndices / 3;
-                    context.UpdateSubresource(ref LayoutData, LayoutConstantBuffer);
-                    return true;
-                });
-
-                context.PixelShader.SetShaderResource(0, null);
-            }
+            context.PixelShader.SetShaderResource(0, null);
         }
 
         private void ProjectCameraTexture()
         {
             if (!Active)
                 return;
+            
+            var device = Resources.D3DDevice;
+            var context = Resources.D3DDeviceContext;
 
-            lock(RenderingLock)
+            CameraData.ViewProjection = Matrix4x4.Transpose(Camera.GetWorldToCameraMatrix(CoordinateSystem));
+            context.UpdateSubresource(ref CameraData, CameraConstantBuffer);
+
+            context.VertexShader.Set(PrepassVertexShader);
+            context.VertexShader.SetConstantBuffer(2, CameraConstantBuffer);
+            context.GeometryShader.Set(null);
+            context.PixelShader.Set(null);
+
+            context.ClearDepthStencilView(DepthTarget, DepthStencilClearFlags.Depth, 1.0f, 0);
+            context.OutputMerger.SetRenderTargets(DepthTarget, (RenderTargetView)null);
+
+            context.Rasterizer.SetViewport(0, 0, Camera.Width, Camera.Height);
+            context.Rasterizer.State = new RasterizerState(device, new RasterizerStateDescription()
             {
-                var device = Resources.D3DDevice;
-                var context = Resources.D3DDeviceContext;
+                CullMode = CullMode.None,
+                FillMode = FillMode.Solid
+            });
 
-                CameraData.ViewProjection = Matrix4x4.Transpose(Camera.GetWorldToCameraMatrix(CoordinateSystem));
-                context.UpdateSubresource(ref CameraData, CameraConstantBuffer);
+            Meshes.Draw(numberOfIndices =>
+            {
+                context.DrawIndexed(numberOfIndices, 0, 0);
+            });
 
-                context.VertexShader.Set(PrepassVertexShader);
-                context.VertexShader.SetConstantBuffer(2, CameraConstantBuffer);
-                context.GeometryShader.Set(null);
-                context.PixelShader.Set(null);
-                    
-                context.ClearDepthStencilView(DepthTarget, DepthStencilClearFlags.Depth, 1.0f, 0);
-                context.OutputMerger.SetRenderTargets(DepthTarget, (RenderTargetView)null);
+            context.OutputMerger.SetRenderTargets(null, (RenderTargetView)null);
 
-                context.Rasterizer.SetViewport(0, 0, Camera.Width, Camera.Height);
-                context.Rasterizer.State = new RasterizerState(device, new RasterizerStateDescription()
-                {
-                    CullMode = CullMode.None,
-                    FillMode = FillMode.Solid
-                });
+            var newTriangleCount = Meshes.TotalNumberOfTriangles;
+            var newNumberOfSide = (int)Math.Ceiling(Math.Sqrt(newTriangleCount / 2.0));
 
-                Meshes.Draw(numberOfIndices =>
-                {
-                    context.DrawIndexed(numberOfIndices, 0, 0);
-                });
-
-                context.OutputMerger.SetRenderTargets(null, (RenderTargetView)null);
-
-                var newTriangleCount = Meshes.TotalNumberOfTriangles;
-                var newNumberOfSide = (int)Math.Ceiling(Math.Sqrt(newTriangleCount / 2.0));
-
-                context.VertexShader.Set(ProjectionVertexShader);
-                context.GeometryShader.Set(ProjectionGeometryShader);
-                context.GeometryShader.SetConstantBuffer(3, LayoutConstantBuffer);
-                context.PixelShader.Set(ProjectionPixelShader);
-                context.PixelShader.SetConstantBuffer(2, CameraConstantBuffer);
-                var cameraTexture = Camera.AcquireTexture();
-                if (cameraTexture == null)
-                    return;
-                var luminanceView = new ShaderResourceView(device, cameraTexture, new ShaderResourceViewDescription()
-                {
-                    Format = SharpDX.DXGI.Format.R8_UInt,
-                    Dimension = ShaderResourceViewDimension.Texture2D,
-                    Texture2D = new ShaderResourceViewDescription.Texture2DResource()
-                    {
-                        MipLevels = 1
-                    }
-                });
-                var chrominanceView = new ShaderResourceView(device, cameraTexture, new ShaderResourceViewDescription()
-                {
-                    Format = SharpDX.DXGI.Format.R8G8_UInt,
-                    Dimension = ShaderResourceViewDimension.Texture2D,
-                    Texture2D = new ShaderResourceViewDescription.Texture2DResource()
-                    {
-                        MipLevels = 1
-                    }
-                });
-                context.PixelShader.SetShaderResource(1, luminanceView);
-                context.PixelShader.SetShaderResource(2, chrominanceView);
-                context.PixelShader.SetShaderResource(3, DepthResource);
-
-                context.OutputMerger.SetRenderTargets(null, MeshTextures[CurrentTexture].RenderColorView);
-
-                context.Rasterizer.SetViewport(0, 0, Resolution, Resolution);
-                context.Rasterizer.State = new RasterizerState(device, new RasterizerStateDescription()
-                {
-                    CullMode = CullMode.None,
-                    FillMode = FillMode.Solid
-                });
-
-                int newOffset = 0;
-                Meshes.Draw(numberOfIndices =>
-                {
-                    context.DrawIndexed(numberOfIndices, 0, 0);
-                },
-                (guid, numberOfIndices) =>
-                {
-                    LayoutData.Offset = (uint)newOffset;
-                    LayoutData.Size = (uint)newNumberOfSide;
-                    newOffset += numberOfIndices / 3;
-                    context.UpdateSubresource(ref LayoutData, LayoutConstantBuffer);
-                    return true;
-                });
-
-                context.PixelShader.SetShaderResource(1, null);
-                context.PixelShader.SetShaderResource(2, null);
-                context.PixelShader.SetShaderResource(3, null);
-
-                context.OutputMerger.SetRenderTargets(null, (RenderTargetView)null);
-
-                luminanceView.Dispose();
-                chrominanceView.Dispose();
-                Camera.ReleaseTexture();
+            context.VertexShader.Set(ProjectionVertexShader);
+            context.GeometryShader.Set(ProjectionGeometryShader);
+            context.GeometryShader.SetConstantBuffer(3, LayoutConstantBuffer);
+            context.PixelShader.Set(ProjectionPixelShader);
+            context.PixelShader.SetConstantBuffer(2, CameraConstantBuffer);
+            var cameraTexture = Camera.AcquireTexture();
+            if (cameraTexture == null)
+            {
+                return;
             }
-        }
+            var luminanceView = new ShaderResourceView(device, cameraTexture, new ShaderResourceViewDescription()
+            {
+                Format = SharpDX.DXGI.Format.R8_UInt,
+                Dimension = ShaderResourceViewDimension.Texture2D,
+                Texture2D = new ShaderResourceViewDescription.Texture2DResource()
+                {
+                    MipLevels = 1
+                }
+            });
+            var chrominanceView = new ShaderResourceView(device, cameraTexture, new ShaderResourceViewDescription()
+            {
+                Format = SharpDX.DXGI.Format.R8G8_UInt,
+                Dimension = ShaderResourceViewDimension.Texture2D,
+                Texture2D = new ShaderResourceViewDescription.Texture2DResource()
+                {
+                    MipLevels = 1
+                }
+            });
+            context.PixelShader.SetShaderResource(1, luminanceView);
+            context.PixelShader.SetShaderResource(2, chrominanceView);
+            context.PixelShader.SetShaderResource(3, DepthResource);
 
+            context.OutputMerger.SetRenderTargets(null, MeshTextures[CurrentTexture].RenderColorView);
+
+            context.Rasterizer.SetViewport(0, 0, Resolution, Resolution);
+            context.Rasterizer.State = new RasterizerState(device, new RasterizerStateDescription()
+            {
+                CullMode = CullMode.None,
+                FillMode = FillMode.Solid
+            });
+
+            int newOffset = 0;
+            Meshes.Draw(numberOfIndices =>
+            {
+                context.DrawIndexed(numberOfIndices, 0, 0);
+            },
+            (guid, numberOfIndices) =>
+            {
+                LayoutData.Offset = (uint)newOffset;
+                LayoutData.Size = (uint)newNumberOfSide;
+                newOffset += numberOfIndices / 3;
+                context.UpdateSubresource(ref LayoutData, LayoutConstantBuffer);
+                return true;
+            });
+
+            context.PixelShader.SetShaderResource(1, null);
+            context.PixelShader.SetShaderResource(2, null);
+            context.PixelShader.SetShaderResource(3, null);
+
+            context.OutputMerger.SetRenderTargets(null, (RenderTargetView)null);
+
+            luminanceView.Dispose();
+            chrominanceView.Dispose();
+            Camera.ReleaseTexture();
+        }
+        
         private void UpdatePacking()
         {
             if (!Active)
                 return;
+            
+            Meshes.UpdateMesh(Surfaces);
 
-            lock (RenderingLock)
+            var nextTexture = (CurrentTexture + 1) % 2;
+
+            var oldTriangleCount = PreviousCount;
+            var oldNumberOnSide = (int)Math.Ceiling(Math.Sqrt(oldTriangleCount / 2.0));
+
+            var newTriangleCount = Meshes.TotalNumberOfTriangles;
+            var newNumberOfSide = (int)Math.Ceiling(Math.Sqrt(newTriangleCount / 2.0));
+
+            var device = Resources.D3DDevice;
+            var context = Resources.D3DDeviceContext;
+
+            var currentTextureSet = MeshTextures[CurrentTexture];
+            var nextTextureSet = MeshTextures[nextTexture];
+
+            context.VertexShader.Set(UpdateVertexShader);
+            context.GeometryShader.Set(UpdateGeometryShader);
+            context.GeometryShader.SetConstantBuffer(2, UpdateLayoutConstantBuffer);
+            context.PixelShader.Set(UpdatePixelShader);
+            context.PixelShader.SetShaderResource(0, currentTextureSet.ColorResourceView);
+            context.PixelShader.SetShaderResource(1, currentTextureSet.QualityAndTimeResourceView);
+
+            context.ClearRenderTargetView(nextTextureSet.RenderColorView, new RawColor4(0.0f, 0.0f, 0.0f, 0.0f));
+            context.ClearRenderTargetView(nextTextureSet.RenderQualityAndTimeView, new RawColor4(0.0f, 0.0f, 0.0f, 0.0f));
+            context.OutputMerger.SetRenderTargets(null, nextTextureSet.RenderColorView);
+
+            context.Rasterizer.SetViewport(0.0f, 0.0f, Resolution, Resolution);
+
+            int newOffset = 0;
+            Meshes.Draw(numberOfIndices =>
             {
-                var nextTexture = (CurrentTexture + 1) % 2;
+                context.DrawIndexed(numberOfIndices, 0, 0);
+            },
+            (guid, numberOfIndices) =>
+            {
+                UpdateLayoutData.OldSize = (uint)oldNumberOnSide;
+                UpdateLayoutData.NewOffset = (uint)newOffset;
+                UpdateLayoutData.NewSize = (uint)newNumberOfSide;
+                newOffset += numberOfIndices / 3;
 
-                var oldTriangleCount = PreviousCount;
-                var oldNumberOnSide = (int)Math.Ceiling(Math.Sqrt(oldTriangleCount / 2.0));
+                if (!PreviousOffsets.ContainsKey(guid))
+                    return false;
 
-                var newTriangleCount = Meshes.TotalNumberOfTriangles;
-                var newNumberOfSide = (int)Math.Ceiling(Math.Sqrt(newTriangleCount / 2.0));
+                UpdateLayoutData.OldOffset = (uint)PreviousOffsets[guid];
 
-                var device = Resources.D3DDevice;
-                var context = Resources.D3DDeviceContext;
+                context.UpdateSubresource(ref UpdateLayoutData, UpdateLayoutConstantBuffer);
+                return true;
+            });
+            context.PixelShader.SetShaderResource(0, null);
+            context.PixelShader.SetShaderResource(1, null);
 
-                var currentTextureSet = MeshTextures[CurrentTexture];
-                var nextTextureSet = MeshTextures[nextTexture];
+            context.OutputMerger.SetRenderTargets(null, (RenderTargetView)null);
 
-                context.VertexShader.Set(UpdateVertexShader);
-                context.GeometryShader.Set(UpdateGeometryShader);
-                context.GeometryShader.SetConstantBuffer(2, UpdateLayoutConstantBuffer);
-                context.PixelShader.Set(UpdatePixelShader);
-                context.PixelShader.SetShaderResource(0, currentTextureSet.ColorResourceView);
-                context.PixelShader.SetShaderResource(1, currentTextureSet.QualityAndTimeResourceView);
-
-                context.ClearRenderTargetView(nextTextureSet.RenderColorView, new RawColor4(0.0f, 0.0f, 0.0f, 0.0f));
-                context.ClearRenderTargetView(nextTextureSet.RenderQualityAndTimeView, new RawColor4(0.0f, 0.0f, 0.0f, 0.0f));
-                context.OutputMerger.SetRenderTargets(null, nextTextureSet.RenderColorView);
-                
-                context.Rasterizer.SetViewport(0.0f, 0.0f, Resolution, Resolution);
-
-                int newOffset = 0;
-                Meshes.Draw(numberOfIndices =>
-                {
-                    context.DrawIndexed(numberOfIndices, 0, 0);
-                },
-                (guid, numberOfIndices) =>
-                {
-                    if (!PreviousOffsets.ContainsKey(guid))
-                        return false;
-
-                    UpdateLayoutData.OldOffset = (uint)PreviousOffsets[guid];
-                    UpdateLayoutData.OldSize = (uint)oldNumberOnSide;
-                    UpdateLayoutData.NewOffset = (uint)newOffset;
-                    UpdateLayoutData.NewSize = (uint)newNumberOfSide;
-                    newOffset += numberOfIndices / 3;
-                    context.UpdateSubresource(ref UpdateLayoutData, UpdateLayoutConstantBuffer);
-                    return true;
-                });
-
-                context.PixelShader.SetShaderResource(0, null);
-                context.PixelShader.SetShaderResource(1, null);
-
-                context.OutputMerger.SetRenderTargets(null, (RenderTargetView)null);
-
-                CurrentTexture = nextTexture;
-            }
+            CurrentTexture = nextTexture;
         }
 
         public void Initialize(SpatialCoordinateSystem coordinateSystem)
@@ -386,7 +393,7 @@ namespace Realistic_Hololens_Rendering.Content
                 var boundingBox = new SpatialBoundingBox()
                 {
                     Center = Vector3.Zero,
-                    Extents = new Vector3(10.0f, 10.0f, 2.5f)
+                    Extents = new Vector3(10.0f, 10.0f, 10.0f)
                 };
                 SurfaceObserver.SetBoundingVolume(SpatialBoundingVolume.FromBox(CoordinateSystem, boundingBox));
                 SurfaceObserver.ObservedSurfacesChanged += (sender, _) =>
@@ -407,7 +414,7 @@ namespace Realistic_Hololens_Rendering.Content
         {
             var device = Resources.D3DDevice;
             var folder = Windows.ApplicationModel.Package.Current.InstalledLocation;
-            
+
             Meshes = new MeshCollection(Resources, await DirectXHelper.ReadDataAsync(await folder.GetFileAsync(@"Content\Shaders\Mesh Updating\VertexShader.cso")));
             Meshes.OnMeshChanged += RequestPackingUpdate;
 

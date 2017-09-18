@@ -112,7 +112,15 @@ namespace Realistic_Hololens_Rendering.Common
             var reference = sender.TryAcquireLatestFrame();
             lock (TransformLock)
             {
-                CoordinateSystem = reference.Properties[InteropStatics.MFSampleExtensionSpatialCameraCoordinateSystem] as SpatialCoordinateSystem;
+                
+                if (reference.Properties.TryGetValue(InteropStatics.MFSampleExtensionSpatialCameraCoordinateSystem, out object coordinateSystem))
+                {
+                    CoordinateSystem = coordinateSystem as SpatialCoordinateSystem;
+                }
+                else
+                {
+                    return;
+                }
                 var newViewMatrix = (reference.Properties[InteropStatics.MFSampleExtensionSpatialCameraViewTransform] as byte[]).ToMatrix4x4();
                 ProjectionMatrix = (reference.Properties[InteropStatics.MFSampleExtensionSpatialCameraProjectionTransform] as byte[]).ToMatrix4x4();
                 ProjectionMatrix.M33 = FarPlane / (NearPlane - FarPlane);

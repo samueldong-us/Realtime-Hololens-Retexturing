@@ -18,6 +18,7 @@ using Realistic_Hololens_Rendering.Common;
 using System.Threading.Tasks;
 using Windows.Foundation;
 using System.Collections.Generic;
+using System.Threading;
 
 #if DRAW_SAMPLE_CONTENT
 using Realistic_Hololens_Rendering.Content;
@@ -181,9 +182,11 @@ namespace Realistic_Hololens_Rendering
             {
                 // When a Pressed gesture is detected, the sample hologram will be repositioned
                 // two meters in front of the user.
+                /*
                 spinningCubeRenderer.PositionHologram(
                     pointerState.TryGetPointerPose(currentCoordinateSystem)
                     );
+                    */
                 // cameraTestRenderer.PositionHologram(pointerState.TryGetPointerPose(currentCoordinateSystem));
                 // meshCollectionTexturer.Paused = !meshCollectionTexturer.Paused;
             }
@@ -200,7 +203,7 @@ namespace Realistic_Hololens_Rendering
                 //
 
 #if DRAW_SAMPLE_CONTENT
-                spinningCubeRenderer.Update(timer);
+                // spinningCubeRenderer.Update(timer);
                 // cameraTestRenderer.Update(timer);
                 // meshTestRenderer.UpdateTransform(currentCoordinateSystem);
                 meshCollectionTexturer.UpdateTransform(currentCoordinateSystem);
@@ -278,7 +281,7 @@ namespace Realistic_Hololens_Rendering
                     var context = deviceResources.D3DDeviceContext;
                     var renderTargetView = cameraResources.BackBufferRenderTargetView;
                     var depthStencilView = cameraResources.DepthStencilView;
-
+                    
                     // Set render targets to the current holographic camera.
                     context.OutputMerger.SetRenderTargets(depthStencilView, renderTargetView);
 

@@ -55,7 +55,7 @@ namespace Realistic_Hololens_Rendering.Common
             drawingFunction((int)Mesh.TriangleIndices.ElementCount);
         }
 
-        public async void ProcessMeshData(SpatialSurfaceInfo surfaceInfo, byte[] vertexShaderBytecode)
+        public void ProcessMeshData(SpatialSurfaceInfo surfaceInfo, byte[] vertexShaderBytecode)
         {
             lock (ReadyLock)
             {
@@ -71,7 +71,7 @@ namespace Realistic_Hololens_Rendering.Common
             {
                 IncludeVertexNormals = true
             };
-            Mesh = await surfaceInfo.TryComputeLatestMeshAsync(1000.0, options);
+            Mesh = surfaceInfo.TryComputeLatestMeshAsync(1000.0, options).AsTask().Result;
             if (Mesh == null || Mesh.TriangleIndices.ElementCount < 3)
                 return;
 
@@ -125,7 +125,7 @@ namespace Realistic_Hololens_Rendering.Common
             var normalTransform = transform;
             normalTransform.Translation = Vector3.Zero;
             TransformData.NormalTransform = Matrix4x4.Transpose(normalTransform);
-
+            
             var context = Resources.D3DDeviceContext;
             context.UpdateSubresource(ref TransformData, TransformConstantBuffer);
         }
