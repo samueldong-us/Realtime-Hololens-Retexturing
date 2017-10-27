@@ -43,11 +43,11 @@ float2 GetInnerUV(uint vertexID, uint primitiveID, uint offset, uint size)
 	float2 Offsets[6] =
 	{
 		float2(Border * pixel, Border * pixel),
-		float2(1.0 - 3 * Border * pixel, Border * pixel),
-		float2(Border * pixel, 1.0 - 3 * Border * pixel),
-		float2(1.0 - Border * pixel, 3 * Border * pixel),
+		float2(1.0 - 2.0 * Border * pixel, Border * pixel),
+		float2(Border * pixel, 1.0 - 2.0 * Border * pixel),
+		float2(1.0 - Border * pixel, 2.0 * Border * pixel),
 		float2(1.0 - Border * pixel, 1.0 - Border * pixel),
-		float2(3 * Border * pixel, 1.0 - Border * pixel)
+		float2(2.0 * Border * pixel, 1.0 - Border * pixel)
 	};
 	primitiveID = primitiveID + offset;
 	uint squareID = primitiveID / 2;
