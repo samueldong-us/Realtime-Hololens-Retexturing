@@ -1,3 +1,6 @@
+#define Resolution 4096.0
+#define Border 1.0
+
 cbuffer LayoutConstantBuffer : register(b3)
 {
 	uint Offset;
@@ -6,50 +9,117 @@ cbuffer LayoutConstantBuffer : register(b3)
 
 struct GeometryShaderInput
 {
-	min16float4 Position : SV_Position;
-	min16float3 WorldSpace : Position;
+	float4 Position : SV_Position;
+	float3 WorldSpace : Position;
 };
 
 struct GeometryShaderOutput
 {
-	min16float4 Position : SV_Position;
-	min16float3 WorldSpace : Position;
+	float4 Position : SV_Position;
+	float3 WorldSpace : Position;
 };
 
-min16float2 GetPosition(uint vertexID, uint primitiveID, uint offset, uint size);
+float2 GetInnerUV(uint vertexID, uint primitiveID, uint offset, uint size);
+float2 GetOuterUV(uint vertexID, uint primitiveID, uint offset, uint size);
+float2 UVToPosition(float2 uv);
+float2 ProjectOntoSegment(float2 start, float2 end, float2 position);
 
-[maxvertexcount(3)]
+[maxvertexcount(39)]
 void main(triangle GeometryShaderInput inputs[3], uint primitiveID : SV_PrimitiveID, inout TriangleStream<GeometryShaderOutput> outputStream)
 {
+	GeometryShaderOutput innerVertices[3];
+	GeometryShaderOutput outerVertices[3];
 	[unroll]
 	for (int i = 0; i < 3; i++)
 	{
-		GeometryShaderOutput output;
-		min16float2 texturePosition = GetPosition(i, primitiveID, Offset, Size);
-		texturePosition.x = texturePosition.x * 2.0 - 1.0;
-		texturePosition.y = texturePosition.y * -2.0 + 1.0;
-		output.Position = min16float4(texturePosition, 0.0, 1.0);
-		output.WorldSpace = inputs[i].WorldSpace;
-		outputStream.Append(output);
+		innerVertices[i].Position = float4(UVToPosition(GetInnerUV(i, primitiveID, Offset, Size)), 0.0, 1.0);
+		innerVertices[i].WorldSpace = inputs[i].WorldSpace;
+		outerVertices[i].Position = float4(UVToPosition(GetOuterUV(i, primitiveID, Offset, Size)), 0.0, 1.0);
+		outerVertices[i].WorldSpace = inputs[i].WorldSpace;
+	}
+	[unroll]
+	for (int i = 0; i < 3; i++)
+	{
+		int j = (i + 1) % 3;
+		GeometryShaderOutput firstBorder, secondBorder;
+		firstBorder.Position = float4(ProjectOntoSegment(outerVertices[i].Position.xy, outerVertices[j].Position.xy, innerVertices[i].Position.xy), 0.0, 1.0);
+		firstBorder.WorldSpace = inputs[i].WorldSpace;
+		secondBorder.Position = float4(ProjectOntoSegment(outerVertices[i].Position.xy, outerVertices[j].Position.xy, innerVertices[j].Position.xy), 0.0, 1.0);
+		secondBorder.WorldSpace = inputs[j].WorldSpace;
+
+		outputStream.Append(outerVertices[i]);
+		outputStream.Append(firstBorder);
+		outputStream.Append(innerVertices[i]);
+
+		outputStream.Append(firstBorder);
+		outputStream.Append(secondBorder);
+		outputStream.Append(innerVertices[i]);
+
+		outputStream.Append(innerVertices[i]);
+		outputStream.Append(secondBorder);
+		outputStream.Append(innerVertices[j]);
+
+		outputStream.Append(secondBorder);
+		outputStream.Append(outerVertices[j]);
+		outputStream.Append(innerVertices[j]);
+	}
+	[unroll]
+	for (int i = 0; i < 3; i++)
+	{
+		outputStream.Append(innerVertices[i]);
 	}
 }
 
-min16float2 GetPosition(uint vertexID, uint primitiveID, uint offset, uint size)
+float2 GetOuterUV(uint vertexID, uint primitiveID, uint offset, uint size)
 {
-	static min16float2 Offsets[6] = 
+	static float2 Offsets[6] =
 	{
-		min16float2(0.0, 0.0),
-		min16float2(1.0, 0.0),
-		min16float2(0.0, 1.0),
-		min16float2(1.0, 0.0),
-		min16float2(1.0, 1.0),
-		min16float2(0.0, 1.0)
+		float2(0.0, 0.0),
+		float2(1.0, 0.0),
+		float2(0.0, 1.0),
+		float2(1.0, 0.0),
+		float2(1.0, 1.0),
+		float2(0.0, 1.0)
 	};
 	primitiveID = primitiveID + offset;
 	uint squareID = primitiveID / 2;
 	float squareSize = 1.0 / size;
-	min16float2 topLeft;
+	float2 topLeft;
 	topLeft.x = (squareID % size) * squareSize;
 	topLeft.y = (squareID / size) * squareSize;
 	return topLeft + Offsets[primitiveID % 2 * 3 + vertexID] * squareSize;
+}
+
+float2 GetInnerUV(uint vertexID, uint primitiveID, uint offset, uint size)
+{
+	float pixel = 1.0 / Resolution * size;
+	float2 Offsets[6] =
+	{
+		float2(Border * pixel, Border * pixel),
+		float2(1.0 - 3 * Border * pixel, Border * pixel),
+		float2(Border * pixel, 1.0 - 3 * Border * pixel),
+		float2(1.0 - Border * pixel, 3 * Border * pixel),
+		float2(1.0 - Border * pixel, 1.0 - Border * pixel),
+		float2(3 * Border * pixel, 1.0 - Border * pixel)
+	};
+	primitiveID = primitiveID + offset;
+	uint squareID = primitiveID / 2;
+	float squareSize = 1.0 / size;
+	float2 topLeft;
+	topLeft.x = (squareID % size) * squareSize;
+	topLeft.y = (squareID / size) * squareSize;
+	return topLeft + Offsets[primitiveID % 2 * 3 + vertexID] * squareSize;
+}
+
+float2 UVToPosition(float2 uv)
+{
+	uv.x = uv.x * 2.0 - 1.0;
+	uv.y = uv.y * -2.0 + 1.0;
+	return uv;
+}
+
+float2 ProjectOntoSegment(float2 start, float2 end, float2 position)
+{
+	float2 direction = normalize(end - start);
+	return dot(position - start, direction) * direction + start;
 }

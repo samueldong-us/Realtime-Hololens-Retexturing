@@ -18,17 +18,17 @@ cbuffer CameraConstantBuffer : register(b2)
 
 struct VertexShaderInput
 {
-	min16float3 Position : POSITION;
-	min16float3 Normal : NORMAL;
+	float3 Position : POSITION;
+	float3 Normal : NORMAL;
 	uint InstanceId : SV_InstanceID;
 };
 
 struct VertexShaderOutput
 {
-	min16float4 Position : SV_POSITION;
-	min16float4 Normal : NORMAL;
-	min16float3 WorldPosition : POSITION;
-	// min16float2 UV : TEXCOORD;
+	float4 Position : SV_POSITION;
+	float4 Normal : NORMAL;
+	float3 WorldPosition : POSITION;
+	// float2 UV : TEXCOORD;
 	uint RenderTargetId : SV_RenderTargetArrayIndex;
 };
 
@@ -38,18 +38,18 @@ VertexShaderOutput main(VertexShaderInput input)
 	float4 position = float4(input.Position, 1.0f);
 	float4 worldPosition = mul(position, VertexModel);
 	position = mul(worldPosition, ViewProjection[input.InstanceId % 2]);
-	output.Position = (min16float4)position;
+	output.Position = (float4)position;
 	float4 normal = float4(input.Normal, 0.0f);
 	normal = mul(normal, NormalModel);
-	output.Normal = (min16float4)normal;
+	output.Normal = (float4)normal;
 	output.RenderTargetId = input.InstanceId % 2;
-	output.WorldPosition = (min16float3)worldPosition.xyz;
+	output.WorldPosition = (float3)worldPosition.xyz;
 	/*
 	float4 cameraPosition = mul(worldPosition, CameraViewProjection);
 	cameraPosition /= cameraPosition.w;
 	float2 cameraUV = cameraPosition.xy;
 	cameraUV = (cameraUV + 1.0f) / 2.0f;
-	output.UV = (min16float2)cameraUV;
+	output.UV = (float2)cameraUV;
 	*/
 	return output;
 }

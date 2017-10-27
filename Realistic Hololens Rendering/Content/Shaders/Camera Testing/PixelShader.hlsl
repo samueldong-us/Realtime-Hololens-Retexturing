@@ -1,13 +1,13 @@
 struct PixelShaderInput
 {
-	min16float4 position : SV_POSITION;
-	min16float2 uv : TEXCOORD0;
+	float4 position : SV_POSITION;
+	float2 uv : TEXCOORD0;
 };
 
 Texture2D<uint> luminanceTexture : register(t0);
 Texture2D<uint2> chrominanceTexture : register(t1);
 
-min16float4 YuvToRgb(min16float2 textureUV)
+float4 YuvToRgb(float2 textureUV)
 {
 	int3 location = int3(0, 0, 0);
 	location.x = (int)(1408 * (1.0f - textureUV.x));
@@ -20,14 +20,14 @@ min16float4 YuvToRgb(min16float2 textureUV)
 	int r = (298 * c + 409 * e + 128) >> 8;
 	int g = (298 * c - 100 * d - 208 * e + 128) >> 8;
 	int b = (298 * c + 516 * d + 128) >> 8;
-	min16float4 rgb = float4(0.0f, 0.0f, 0.0f, 255.0f);
+	float4 rgb = float4(0.0f, 0.0f, 0.0f, 255.0f);
 	rgb.x = max(0, min(255, r));
 	rgb.y = max(0, min(255, g));
 	rgb.z = max(0, min(255, b));
 	return rgb / 255.0;
 }
 
-min16float4 main(PixelShaderInput input) : SV_TARGET
+float4 main(PixelShaderInput input) : SV_TARGET
 {
 	return YuvToRgb(input.uv);
 }

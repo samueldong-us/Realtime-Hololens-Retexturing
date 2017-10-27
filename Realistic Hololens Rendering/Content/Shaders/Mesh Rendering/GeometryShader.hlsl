@@ -1,3 +1,6 @@
+#define Resolution 4096.0
+#define Border 1.0
+
 cbuffer LayoutConstantBuffer : register(b3)
 {
 	uint Offset;
@@ -6,19 +9,19 @@ cbuffer LayoutConstantBuffer : register(b3)
 
 struct GeometryShaderInput
 {
-	min16float4 Position : SV_Position;
-	min16float2 UV : TexCoord;
+	float4 Position : SV_Position;
+	float2 UV : TexCoord;
 	uint RenderTargetId : SV_RenderTargetArrayIndex;
 };
 
 struct GeometryShaderOutput
 {
-	min16float4 Position : SV_Position;
-	min16float2 UV : TexCoord;
+	float4 Position : SV_Position;
+	float2 UV : TexCoord;
 	uint RenderTargetId : SV_RenderTargetArrayIndex;
 };
 
-min16float2 GetPosition(uint vertexID, uint primitiveID, uint offset, uint size);
+float2 GetInnerUV(uint vertexID, uint primitiveID, uint offset, uint size);
 
 [maxvertexcount(3)]
 void main(triangle GeometryShaderInput inputs[3], uint primitiveID : SV_PrimitiveID, inout TriangleStream<GeometryShaderOutput> outputStream)
@@ -28,27 +31,28 @@ void main(triangle GeometryShaderInput inputs[3], uint primitiveID : SV_Primitiv
 	{
 		GeometryShaderOutput output;
 		output.Position = inputs[i].Position;
-		output.UV = GetPosition(i, primitiveID, Offset, Size);
+		output.UV = GetInnerUV(i, primitiveID, Offset, Size);
 		output.RenderTargetId = inputs[i].RenderTargetId;
 		outputStream.Append(output);
 	}
 }
 
-min16float2 GetPosition(uint vertexID, uint primitiveID, uint offset, uint size)
+float2 GetInnerUV(uint vertexID, uint primitiveID, uint offset, uint size)
 {
-	static min16float2 Offsets[6] = 
+	float pixel = 1.0 / Resolution * size;
+	float2 Offsets[6] =
 	{
-		min16float2(0.0, 0.0),
-		min16float2(1.0, 0.0),
-		min16float2(0.0, 1.0),
-		min16float2(1.0, 0.0),
-		min16float2(1.0, 1.0),
-		min16float2(0.0, 1.0)
+		float2(Border * pixel, Border * pixel),
+		float2(1.0 - 3 * Border * pixel, Border * pixel),
+		float2(Border * pixel, 1.0 - 3 * Border * pixel),
+		float2(1.0 - Border * pixel, 3 * Border * pixel),
+		float2(1.0 - Border * pixel, 1.0 - Border * pixel),
+		float2(3 * Border * pixel, 1.0 - Border * pixel)
 	};
 	primitiveID = primitiveID + offset;
 	uint squareID = primitiveID / 2;
 	float squareSize = 1.0 / size;
-	min16float2 topLeft;
+	float2 topLeft;
 	topLeft.x = (squareID % size) * squareSize;
 	topLeft.y = (squareID / size) * squareSize;
 	return topLeft + Offsets[primitiveID % 2 * 3 + vertexID] * squareSize;

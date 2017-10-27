@@ -1,13 +1,13 @@
 struct PixelShaderInput
 {
-	min16float4 Position : SV_POSITION;
-	min16float2 UV : TEXCOORD;
+	float4 Position : SV_POSITION;
+	float2 UV : TEXCOORD;
 };
 
 struct PixelShaderOutput
 {
-	min16float4 Color : SV_Target0;
-	// min16float2 QualityAndTime : SV_Target1;
+	float4 Color : SV_Target0;
+	// float2 QualityAndTime : SV_Target1;
 };
 
 Texture2D<float4> Color : register(t0);

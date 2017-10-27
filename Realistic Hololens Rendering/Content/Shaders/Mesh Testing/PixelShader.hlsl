@@ -1,9 +1,9 @@
 struct PixelShaderInput
 {
-	min16float4 Position : SV_POSITION;
-	min16float4 Normal : NORMAL;
-	min16float3 WorldPosition : POSITION;
-	// min16float2 UV : TEXCOORD;
+	float4 Position : SV_POSITION;
+	float4 Normal : NORMAL;
+	float3 WorldPosition : POSITION;
+	// float2 UV : TEXCOORD;
 };
 
 /*
@@ -19,7 +19,7 @@ SamplerState CubeSamplerState
 };
 
 /*
-min16float4 YuvToRgb(min16float2 textureUV)
+float4 YuvToRgb(float2 textureUV)
 {
 	int3 location = int3(0, 0, 0);
 	location.x = (int)(1408 * (textureUV.x));
@@ -32,7 +32,7 @@ min16float4 YuvToRgb(min16float2 textureUV)
 	int r = (298 * c + 409 * e + 128) >> 8;
 	int g = (298 * c - 100 * d - 208 * e + 128) >> 8;
 	int b = (298 * c + 516 * d + 128) >> 8;
-	min16float4 rgb = float4(0.0f, 0.0f, 0.0f, 255.0f);
+	float4 rgb = float4(0.0f, 0.0f, 0.0f, 255.0f);
 	rgb.x = max(0, min(255, r));
 	rgb.y = max(0, min(255, g));
 	rgb.z = max(0, min(255, b));
@@ -40,7 +40,7 @@ min16float4 YuvToRgb(min16float2 textureUV)
 }
 */
 
-min16float4 main(PixelShaderInput input) : SV_TARGET
+float4 main(PixelShaderInput input) : SV_TARGET
 {
 	return CubeMap.Sample(CubeSamplerState, input.WorldPosition);
 }

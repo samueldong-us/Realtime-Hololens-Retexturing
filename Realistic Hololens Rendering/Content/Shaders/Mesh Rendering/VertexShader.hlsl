@@ -11,15 +11,15 @@ cbuffer ViewProjectionConstantBuffer : register(b1)
 
 struct VertexShaderInput
 {
-	min16float3 Position : Position;
-	min16float3 Normal : Normal;
+	float3 Position : Position;
+	float3 Normal : Normal;
 	uint InstanceID : SV_InstanceID;
 };
 
 struct VertexShaderOutput
 {
-	min16float4 Position : SV_Position;
-	min16float2 UV : TexCoord;
+	float4 Position : SV_Position;
+	float2 UV : TexCoord;
 	uint RenderTargetId : SV_RenderTargetArrayIndex;
 };
 
@@ -29,8 +29,8 @@ VertexShaderOutput main(VertexShaderInput input)
 	float4 position = float4(input.Position, 1.0f);
 	float4 worldPosition = mul(position, VertexModel);
 	position = mul(worldPosition, ViewProjection[input.InstanceID % 2]);
-	output.Position = (min16float4)position;
+	output.Position = (float4)position;
 	output.RenderTargetId = input.InstanceID % 2;
-	output.UV = min16float2(0.0, 0.0);
+	output.UV = float2(0.0, 0.0);
 	return output;
 }

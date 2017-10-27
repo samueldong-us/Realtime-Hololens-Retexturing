@@ -2,14 +2,14 @@
 
 struct PixelShaderInput
 {
-	min16float4 Position : SV_POSITION;
-	min16float3 WorldSpace : POSITION;
+	float4 Position : SV_POSITION;
+	float3 WorldSpace : POSITION;
 };
 
 struct PixelShaderOutput
 {
-	min16float4 Color : SV_Target0;
-	// min16float2 QualityAndTime : SV_Target1;
+	float4 Color : SV_Target0;
+	// float2 QualityAndTime : SV_Target1;
 };
 
 cbuffer CameraConstantBuffer : register(b2)
@@ -32,6 +32,6 @@ SamplerState TextureSamplerState
 PixelShaderOutput main(PixelShaderInput input)
 {
 	PixelShaderOutput output;
-	output.Color = min16float4(1.0, 1.0, 1.0, 1.0);
+	output.Color = float4(1.0, 1.0, 1.0, 1.0);
 	return output;
 }

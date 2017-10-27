@@ -13,8 +13,8 @@ cbuffer ViewProjectionConstantBuffer : register(b1)
 // Per-vertex data used as input to the vertex shader.
 struct VertexShaderInput
 {
-    min16float3 pos     : POSITION;
-    min16float3 color   : COLOR0;
+    float3 pos     : POSITION;
+    float3 color   : COLOR0;
     uint        instId  : SV_InstanceID;
 };
 
@@ -22,8 +22,8 @@ struct VertexShaderInput
 // Note that the render target array index is set here in the vertex shader.
 struct VertexShaderOutput
 {
-    min16float4 pos     : SV_POSITION;
-    min16float3 color   : COLOR0;
+    float4 pos     : SV_POSITION;
+    float3 color   : COLOR0;
     uint        rtvId   : SV_RenderTargetArrayIndex; // SV_InstanceID % 2
 };
 
@@ -44,7 +44,7 @@ VertexShaderOutput main(VertexShaderInput input)
 
     // Correct for perspective and project the vertex position onto the screen.
     pos = mul(pos, viewProjection[idx]);
-    output.pos = (min16float4)pos;
+    output.pos = (float4)pos;
 
     // Pass the color through without modification.
     output.color = input.color;

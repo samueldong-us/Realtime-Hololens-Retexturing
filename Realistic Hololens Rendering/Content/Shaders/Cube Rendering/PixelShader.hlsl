@@ -1,8 +1,8 @@
 struct PixelShaderInput
 {
-	min16float4 Position : SV_POSITION;
-	min16float4 Normal : NORMAL;
-	min16float2 UV : TEXCOORD;
+	float4 Position : SV_POSITION;
+	float4 Normal : NORMAL;
+	float2 UV : TEXCOORD;
 };
 
 cbuffer CameraDirectionConstantBuffer : register(b3)
@@ -13,7 +13,7 @@ cbuffer CameraDirectionConstantBuffer : register(b3)
 Texture2D<uint> LuminanceTexture : register(t0);
 Texture2D<uint2> ChrominanceTexture : register(t1);
 
-min16float3 YuvToRgb(min16float2 textureUV)
+float3 YuvToRgb(float2 textureUV)
 {
 	int3 location = int3(0, 0, 0);
 	location.x = (int)(1408 * (textureUV.x));
@@ -26,7 +26,7 @@ min16float3 YuvToRgb(min16float2 textureUV)
 	int r = (298 * c + 409 * e + 128) >> 8;
 	int g = (298 * c - 100 * d - 208 * e + 128) >> 8;
 	int b = (298 * c + 516 * d + 128) >> 8;
-	min16float3 rgb = float3(0.0f, 0.0f, 0.0f);
+	float3 rgb = float3(0.0f, 0.0f, 0.0f);
 	rgb.x = max(0, min(255, r));
 	rgb.y = max(0, min(255, g));
 	rgb.z = max(0, min(255, b));
@@ -38,8 +38,8 @@ min16float3 YuvToRgb(min16float2 textureUV)
 	return rgb / 255.0;
 }
 
-min16float4 main(PixelShaderInput input) : SV_TARGET
+float4 main(PixelShaderInput input) : SV_TARGET
 {
 	float alpha = max(0.0, dot(normalize(Forward.xyz), -normalize(input.Normal.xyz)));
-	return min16float4(YuvToRgb(input.UV), alpha);
+	return float4(YuvToRgb(input.UV), alpha);
 }
