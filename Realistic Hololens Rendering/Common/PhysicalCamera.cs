@@ -121,8 +121,8 @@ namespace Realistic_Hololens_Rendering.Common
                 {
                     return;
                 }
-                var newViewMatrix = (reference.Properties[InteropStatics.MFSampleExtensionSpatialCameraViewTransform] as byte[]).ToMatrix4x4();
-                ProjectionMatrix = (reference.Properties[InteropStatics.MFSampleExtensionSpatialCameraProjectionTransform] as byte[]).ToMatrix4x4();
+                var newViewMatrix = (reference.Properties[InteropStatics.MFSampleExtensionSpatialCameraViewTransform] as byte[]).To<Matrix4x4>();
+                ProjectionMatrix = (reference.Properties[InteropStatics.MFSampleExtensionSpatialCameraProjectionTransform] as byte[]).To<Matrix4x4>();
                 ProjectionMatrix.M33 = FarPlane / (NearPlane - FarPlane);
                 ProjectionMatrix.M43 = NearPlane * FarPlane / (NearPlane - FarPlane);
                 UpdateStability(newViewMatrix);

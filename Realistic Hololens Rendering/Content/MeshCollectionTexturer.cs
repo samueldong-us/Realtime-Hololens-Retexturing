@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Windows.Media.SpeechRecognition;
 using Windows.Perception.Spatial;
 using Windows.Perception.Spatial.Surfaces;
+using Windows.Storage;
 
 namespace Realistic_Hololens_Rendering.Content
 {
@@ -97,7 +98,8 @@ namespace Realistic_Hololens_Rendering.Content
             {
                 "Toggle Camera",
                 "Toggle Geometry",
-                "Toggle Debug"
+                "Toggle Debug",
+                "Export Mesh"
             });
             SpeechRecognizer.Constraints.Add(speechOptions);
             var result = await SpeechRecognizer.CompileConstraintsAsync();
@@ -108,7 +110,7 @@ namespace Realistic_Hololens_Rendering.Content
             SpeechRecognizer.ContinuousRecognitionSession.ResultGenerated += OnSpeechCommandDetected;
         }
 
-        private void OnSpeechCommandDetected(SpeechContinuousRecognitionSession sender, SpeechContinuousRecognitionResultGeneratedEventArgs args)
+        private async void OnSpeechCommandDetected(SpeechContinuousRecognitionSession sender, SpeechContinuousRecognitionResultGeneratedEventArgs args)
         {
             switch (args.Result.Text)
             {
@@ -121,7 +123,33 @@ namespace Realistic_Hololens_Rendering.Content
                 case "Toggle Debug":
                     Debug = !Debug;
                     break;
+                case "Export Mesh":
+                    await ExportMeshAndTexture();
+                    break;
             }
+        }
+
+        private async Task ExportMeshAndTexture()
+        {
+            var timestamp = DateTime.Now.ToString("MMM dd, yyyy - hh:mm:ss");
+            var localFolder = ApplicationData.Current.LocalFolder;
+            var newFolder = await localFolder.CreateFolderAsync(timestamp);
+            var modelFile = await newFolder.CreateFileAsync("Mesh.obj");
+            await FileIO.WriteTextAsync(modelFile, Meshes.ExportMesh("Material.mtl", "default"));
+            var materialFile = await newFolder.CreateFileAsync("Material.mtl");
+            await FileIO.WriteTextAsync(materialFile, GenerateMaterialFile("Texture.png"));
+            var textureFile = await newFolder.CreateFileAsync("Texture.png");
+            await SaveTexture(textureFile);
+        }
+
+        private async Task SaveTexture(StorageFile textureFile)
+        {
+            throw new NotImplementedException();
+        }
+
+        private string GenerateMaterialFile(string textureFile)
+        {
+            throw new NotImplementedException();
         }
 
         private void RequestMeshProjection()

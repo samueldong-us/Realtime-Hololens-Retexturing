@@ -5,12 +5,12 @@ namespace Realistic_Hololens_Rendering.Common
 {
     internal static class Utilities
     {
-        public static Matrix4x4 ToMatrix4x4(this byte[] data)
+        public static T To<T>(this byte[] data)
         {
             var handle = GCHandle.Alloc(data, GCHandleType.Pinned);
             try
             {
-                return Marshal.PtrToStructure<Matrix4x4>(handle.AddrOfPinnedObject());
+                return Marshal.PtrToStructure<T>(handle.AddrOfPinnedObject());
             }
             finally
             {
