@@ -1,10 +1,15 @@
 ﻿using Realistic_Hololens_Rendering.Common;
+using SharpDX;
 using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
+using SharpDX.DXGI;
 using SharpDX.Mathematics.Interop;
+using SharpDX.WIC;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Numerics;
+using System.Text;
 using System.Threading.Tasks;
 using Windows.Media.SpeechRecognition;
 using Windows.Perception.Spatial;
@@ -69,6 +74,7 @@ namespace Realistic_Hololens_Rendering.Content
         private bool GeometryPaused;
         private bool CameraPaused;
         private bool Debug;
+        private bool ExportRequested;
 
         public MeshCollectionTexturer(DeviceResources resources, PhysicalCamera camera)
         {
@@ -78,6 +84,7 @@ namespace Realistic_Hololens_Rendering.Content
             ProjectionRequested = false;
             UpdateRequested = false;
             Debug = false;
+            ExportRequested = false;
             TextureDebugger = new TextureDebugRenderer(resources);
 
             Camera.FrameUpdated += RequestMeshProjection;
@@ -110,7 +117,7 @@ namespace Realistic_Hololens_Rendering.Content
             SpeechRecognizer.ContinuousRecognitionSession.ResultGenerated += OnSpeechCommandDetected;
         }
 
-        private async void OnSpeechCommandDetected(SpeechContinuousRecognitionSession sender, SpeechContinuousRecognitionResultGeneratedEventArgs args)
+        private void OnSpeechCommandDetected(SpeechContinuousRecognitionSession sender, SpeechContinuousRecognitionResultGeneratedEventArgs args)
         {
             switch (args.Result.Text)
             {
@@ -124,32 +131,83 @@ namespace Realistic_Hololens_Rendering.Content
                     Debug = !Debug;
                     break;
                 case "Export Mesh":
-                    await ExportMeshAndTexture();
+                    ExportRequested = true;
                     break;
             }
         }
 
-        private async Task ExportMeshAndTexture()
+        private void ExportMeshAndTexture()
         {
-            var timestamp = DateTime.Now.ToString("MMM dd, yyyy - hh:mm:ss");
+            var timestamp = DateTime.Now.ToString("MMM dd, yyyy - hh-mm-ss");
             var localFolder = ApplicationData.Current.LocalFolder;
-            var newFolder = await localFolder.CreateFolderAsync(timestamp);
-            var modelFile = await newFolder.CreateFileAsync("Mesh.obj");
-            await FileIO.WriteTextAsync(modelFile, Meshes.ExportMesh("Material.mtl", "default"));
-            var materialFile = await newFolder.CreateFileAsync("Material.mtl");
-            await FileIO.WriteTextAsync(materialFile, GenerateMaterialFile("Texture.png"));
-            var textureFile = await newFolder.CreateFileAsync("Texture.png");
-            await SaveTexture(textureFile);
+            var newFolder = localFolder.CreateFolderAsync(timestamp).AsTask().Result;
+            var modelFile = newFolder.CreateFileAsync("Mesh.obj", CreationCollisionOption.ReplaceExisting).AsTask().Result;
+            FileIO.WriteTextAsync(modelFile, Meshes.ExportMesh("Material.mtl", "default")).AsTask().Wait(-1);
+            var materialFile = newFolder.CreateFileAsync("Material.mtl", CreationCollisionOption.ReplaceExisting).AsTask().Result;
+            FileIO.WriteTextAsync(materialFile, GenerateMaterialFile("Texture.png")).AsTask().Wait(-1);
+            var textureFile = newFolder.CreateFileAsync("Texture.png", CreationCollisionOption.ReplaceExisting).AsTask().Result;
+            SaveTexture(textureFile);
         }
 
-        private async Task SaveTexture(StorageFile textureFile)
+        private void SaveTexture(StorageFile textureFile)
         {
-            throw new NotImplementedException();
+            var device = Resources.D3DDevice;
+            var context = Resources.D3DDeviceContext;
+
+            var textureToSave = MeshTextures[CurrentTexture].MeshColor;
+            var outputTexture = new Texture2D(device, new Texture2DDescription
+            {
+                Width = textureToSave.Description.Width,
+                Height = textureToSave.Description.Height,
+                MipLevels = 1,
+                ArraySize = 1,
+                Format = textureToSave.Description.Format,
+                Usage = ResourceUsage.Staging,
+                SampleDescription = new SampleDescription(1, 0),
+                BindFlags = BindFlags.None,
+                CpuAccessFlags = CpuAccessFlags.Read,
+                OptionFlags = ResourceOptionFlags.None
+            });
+
+            context.CopyResource(textureToSave, outputTexture);
+            var mappedResource = context.MapSubresource(outputTexture, 0, 0, MapMode.Read, SharpDX.Direct3D11.MapFlags.None, out var dataStream);
+            var dataRectangle = new DataRectangle
+            {
+                DataPointer = dataStream.DataPointer,
+                Pitch = mappedResource.RowPitch
+            };
+            var imagingFactory = new ImagingFactory();
+            var bitmap = new Bitmap(imagingFactory, outputTexture.Description.Width, outputTexture.Description.Height, PixelFormat.Format32bppRGBA, dataRectangle);
+            using (var stream = new MemoryStream())
+            using (var bitmapEncoder = new PngBitmapEncoder(imagingFactory, stream))
+            using (var bitmapFrame = new BitmapFrameEncode(bitmapEncoder))
+            {
+                bitmapFrame.Initialize();
+                bitmapFrame.SetSize(bitmap.Size.Width, bitmap.Size.Height);
+                var pixelFormat = PixelFormat.FormatDontCare;
+                bitmapFrame.SetPixelFormat(ref pixelFormat);
+                bitmapFrame.WriteSource(bitmap);
+                bitmapFrame.Commit();
+                bitmapEncoder.Commit();
+                FileIO.WriteBytesAsync(textureFile, stream.ToArray()).AsTask().Wait(-1);
+            }
+            context.UnmapSubresource(outputTexture, 0);
+            outputTexture.Dispose();
+            bitmap.Dispose();
         }
 
         private string GenerateMaterialFile(string textureFile)
         {
-            throw new NotImplementedException();
+            var materialBuilder = new StringBuilder();
+            materialBuilder
+                .AppendLine("newmtl default")
+                .AppendLine("Ka 0.0 0.0 0.0")
+                .AppendLine("Kd 1.0 1.0 1.0")
+                .AppendLine("Ks 0.0 0.0 0.0")
+                .AppendLine("d 1.0")
+                .AppendLine("illum 0")
+                .AppendLine($"map_Kd {textureFile}");
+            return materialBuilder.ToString();
         }
 
         private void RequestMeshProjection()
@@ -195,6 +253,11 @@ namespace Realistic_Hololens_Rendering.Content
                 UpdatePacking();
                 UpdateRequested = false;
             }
+            if (ExportRequested)
+            {
+                ExportMeshAndTexture();
+                ExportRequested = false;
+            }
         }
 
         private void RenderMesh()
@@ -210,7 +273,7 @@ namespace Realistic_Hololens_Rendering.Content
             context.GeometryShader.SetConstantBuffer(3, LayoutConstantBuffer);
             context.PixelShader.Set(RenderPixelShader);
             context.PixelShader.SetShaderResource(0, MeshTextures[CurrentTexture].ColorResourceView);
-            context.PixelShader.SetSampler(0, new SamplerState(device, new SamplerStateDescription()
+            context.PixelShader.SetSampler(0, new SamplerState(device, new SamplerStateDescription
             {
                 AddressU = TextureAddressMode.Clamp,
                 AddressV = TextureAddressMode.Clamp,
@@ -219,7 +282,7 @@ namespace Realistic_Hololens_Rendering.Content
                 Filter = Filter.MinMagLinearMipPoint
             }));
 
-            context.Rasterizer.State = new RasterizerState(device, new RasterizerStateDescription()
+            context.Rasterizer.State = new RasterizerState(device, new RasterizerStateDescription
             {
                 CullMode = CullMode.None,
                 FillMode = FillMode.Solid
@@ -262,7 +325,7 @@ namespace Realistic_Hololens_Rendering.Content
             context.OutputMerger.SetRenderTargets(DepthTarget, (RenderTargetView)null);
 
             context.Rasterizer.SetViewport(0, 0, Camera.Width, Camera.Height);
-            context.Rasterizer.State = new RasterizerState(device, new RasterizerStateDescription()
+            context.Rasterizer.State = new RasterizerState(device, new RasterizerStateDescription
             {
                 CullMode = CullMode.None,
                 FillMode = FillMode.Solid
@@ -288,18 +351,18 @@ namespace Realistic_Hololens_Rendering.Content
             {
                 return;
             }
-            var luminanceView = new ShaderResourceView(device, cameraTexture, new ShaderResourceViewDescription()
+            var luminanceView = new ShaderResourceView(device, cameraTexture, new ShaderResourceViewDescription
             {
-                Format = SharpDX.DXGI.Format.R8_UInt,
+                Format = Format.R8_UInt,
                 Dimension = ShaderResourceViewDimension.Texture2D,
                 Texture2D = new ShaderResourceViewDescription.Texture2DResource()
                 {
                     MipLevels = 1
                 }
             });
-            var chrominanceView = new ShaderResourceView(device, cameraTexture, new ShaderResourceViewDescription()
+            var chrominanceView = new ShaderResourceView(device, cameraTexture, new ShaderResourceViewDescription
             {
-                Format = SharpDX.DXGI.Format.R8G8_UInt,
+                Format = Format.R8G8_UInt,
                 Dimension = ShaderResourceViewDimension.Texture2D,
                 Texture2D = new ShaderResourceViewDescription.Texture2DResource()
                 {
@@ -313,7 +376,7 @@ namespace Realistic_Hololens_Rendering.Content
             context.OutputMerger.SetRenderTargets(null, MeshTextures[CurrentTexture].RenderColorView);
 
             context.Rasterizer.SetViewport(0, 0, Resolution, Resolution);
-            context.Rasterizer.State = new RasterizerState(device, new RasterizerStateDescription()
+            context.Rasterizer.State = new RasterizerState(device, new RasterizerStateDescription
             {
                 CullMode = CullMode.None,
                 FillMode = FillMode.Solid
@@ -418,7 +481,7 @@ namespace Realistic_Hololens_Rendering.Content
             if (requestStatus == SpatialPerceptionAccessStatus.Allowed)
             {
                 SurfaceObserver = new SpatialSurfaceObserver();
-                var boundingBox = new SpatialBoundingBox()
+                var boundingBox = new SpatialBoundingBox
                 {
                     Center = Vector3.Zero,
                     Extents = new Vector3(10.0f, 10.0f, 10.0f)
@@ -461,30 +524,30 @@ namespace Realistic_Hololens_Rendering.Content
             RenderGeometryShader = ToDispose(await DirectXHelper.LoadShader<GeometryShader>(device, folder, @"Content\Shaders\Mesh Rendering\GeometryShader.cso"));
             RenderPixelShader = ToDispose(await DirectXHelper.LoadShader<PixelShader>(device, folder, @"Content\Shaders\Mesh Rendering\PixelShader.cso"));
 
-            DepthTexture = ToDispose(new Texture2D(device, new Texture2DDescription()
+            DepthTexture = ToDispose(new Texture2D(device, new Texture2DDescription
             {
                 Width = Camera.Width,
                 Height = Camera.Height,
                 ArraySize = 1,
                 CpuAccessFlags = CpuAccessFlags.None,
                 BindFlags = BindFlags.DepthStencil | BindFlags.ShaderResource,
-                Format = SharpDX.DXGI.Format.R32_Typeless,
+                Format = Format.R32_Typeless,
                 Usage = ResourceUsage.Default,
                 OptionFlags = ResourceOptionFlags.None,
                 MipLevels = 0,
-                SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0)
+                SampleDescription = new SampleDescription(1, 0)
             }));
-            var depthTargetDescription = new DepthStencilViewDescription()
+            var depthTargetDescription = new DepthStencilViewDescription
             {
-                Format = SharpDX.DXGI.Format.D32_Float,
+                Format = Format.D32_Float,
                 Dimension = DepthStencilViewDimension.Texture2D,
                 Flags = DepthStencilViewFlags.None
             };
             depthTargetDescription.Texture2D.MipSlice = 0;
             DepthTarget = ToDispose(new DepthStencilView(device, DepthTexture, depthTargetDescription));
-            var depthResourceDescription = new ShaderResourceViewDescription()
+            var depthResourceDescription = new ShaderResourceViewDescription
             {
-                Format = SharpDX.DXGI.Format.R32_Float,
+                Format = Format.R32_Float,
                 Dimension = ShaderResourceViewDimension.Texture2D
             };
             depthResourceDescription.Texture2D.MipLevels = -1;

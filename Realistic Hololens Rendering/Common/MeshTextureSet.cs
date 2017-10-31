@@ -14,8 +14,8 @@ namespace Realistic_Hololens_Rendering.Common
         public RenderTargetView RenderQualityAndTimeView { get; private set; }
         public ShaderResourceView ColorResourceView { get; private set; }
         public ShaderResourceView QualityAndTimeResourceView { get; private set; }
-        private Texture2D MeshColor;
-        private Texture2D MeshQualityAndTime;
+        public Texture2D MeshColor { get; private set; }
+        public Texture2D MeshQualityAndTime { get; private set; }
 
         private DeviceResources Resources;
         private int Resolution;
@@ -45,7 +45,7 @@ namespace Realistic_Hololens_Rendering.Common
                 Format = SharpDX.DXGI.Format.R8G8B8A8_UNorm,
                 Usage = ResourceUsage.Default,
                 OptionFlags = ResourceOptionFlags.None,
-                MipLevels = 0,
+                MipLevels = 1,
                 SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0)
             }));
 
@@ -59,7 +59,7 @@ namespace Realistic_Hololens_Rendering.Common
                 Format = SharpDX.DXGI.Format.R16G16_Float,
                 Usage = ResourceUsage.Default,
                 OptionFlags = ResourceOptionFlags.None,
-                MipLevels = 0,
+                MipLevels = 1,
                 SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0)
             }));
 

@@ -24,7 +24,7 @@ namespace Realistic_Hololens_Rendering.Common
         public int NumberOfIndices { get => (int)(Mesh?.TriangleIndices?.ElementCount ?? 0); }
         public SpatialSurfaceMesh Mesh { get; private set; }
 
-        private TransformConstantBuffer TransformData = new TransformConstantBuffer();
+        public TransformConstantBuffer TransformData = new TransformConstantBuffer();
         private bool Ready;
         private object ReadyLock = new object();
         private DeviceResources Resources;

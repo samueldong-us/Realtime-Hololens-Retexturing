@@ -108,7 +108,7 @@ namespace Realistic_Hololens_Rendering.Common
                 .AppendLine($"usemtl {materialName}");
             foreach (var face in faces)
             {
-                var vertices = face.Vertices.Select(vertex => $"{vertex.PositionIndex}/{vertex.UVIndex}/{vertex.NormalIndex}");
+                var vertices = face.Vertices.Select(vertex => $"{vertex.PositionIndex + 1}/{vertex.UVIndex + 1}/{vertex.NormalIndex + 1}");
                 objBuilder.AppendLine($"f {string.Join(" ", vertices)}");
             }
             return objBuilder.ToString();
@@ -143,7 +143,7 @@ namespace Realistic_Hololens_Rendering.Common
                             Z = Math.Max(reader.ReadInt16() / (float)Int16.MaxValue, -1.0f)
                         };
                         reader.ReadInt16();
-                        return meshData.VertexPositionScale * output;
+                        return Vector3.Transform(output, Matrix4x4.Transpose(mesh.Value.TransformData.VertexTransform));
                     }).ToArray();
                     var normalArray = BytesTo(meshData.VertexNormals.Data.ToArray(), reader =>
                     {
@@ -154,7 +154,7 @@ namespace Realistic_Hololens_Rendering.Common
                             Z = Math.Max(reader.ReadSByte() / (float)SByte.MaxValue, -1.0f)
                         };
                         reader.ReadSByte();
-                        return output;
+                        return Vector3.Transform(output, Matrix4x4.Transpose(mesh.Value.TransformData.NormalTransform));
                     }).ToArray();
                     var indices = BytesTo(meshData.TriangleIndices.Data.ToArray(), reader =>
                     {
@@ -167,6 +167,7 @@ namespace Realistic_Hololens_Rendering.Common
                         {
                             int index = indices[primitiveID * 3 + vertexID];
                             var uv = CalculateUV(primitiveID + offset, vertexID, size);
+                            uv.Y = 1.0f - uv.Y;
                             face.Vertices[vertexID] = new Vertex()
                             {
                                 PositionIndex = LookupOrAdd(positionArray[index], positionLookup, positions),
