@@ -37,9 +37,9 @@ namespace Realistic_Hololens_Rendering
         // is used to demonstrate world-locked rendering.
         private SpinningCubeRenderer spinningCubeRenderer;
         private CameraTestRenderer cameraTestRenderer;
-        private MeshTestRenderer meshTestRenderer;
+        private CubemapMeshRenderer meshTestRenderer;
         private PhysicalCamera physicalCamera;
-        private MeshCollectionTexturer meshCollectionTexturer;
+        private MainRenderer meshCollectionTexturer;
         
         private SpatialInputHandler         spatialInputHandler;
 #endif
@@ -87,7 +87,7 @@ namespace Realistic_Hololens_Rendering
             physicalCamera.Initialize();
             // cameraTestRenderer = new CameraTestRenderer(deviceResources, physicalCamera);
             // meshTestRenderer = new MeshTestRenderer(deviceResources, physicalCamera);
-            meshCollectionTexturer = new MeshCollectionTexturer(deviceResources, physicalCamera);
+            meshCollectionTexturer = new MainRenderer(deviceResources, physicalCamera);
 
             spatialInputHandler = new SpatialInputHandler();
 #endif

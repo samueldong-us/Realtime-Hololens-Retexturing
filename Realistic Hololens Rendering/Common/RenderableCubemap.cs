@@ -1,26 +1,42 @@
 ﻿using Realistic_Hololens_Rendering.Content;
 using SharpDX.Direct3D11;
+using SharpDX.Mathematics.Interop;
 using System;
+using System.Collections.ObjectModel;
 using System.Numerics;
 
 namespace Realistic_Hololens_Rendering.Common
 {
     class RenderableCubemap : Disposer
     {
-        public const int Resolution = 1024;
+        public readonly int Resolution;
+        public readonly int MipCount;
+        public readonly ReadOnlyCollection<RenderTargetView> RenderTargetViews;
+        public readonly ReadOnlyCollection<ShaderResourceView> ShaderResourceViews;
+
         public RenderTargetView RenderTargetView { get; private set; }
         public DepthStencilView DepthStencilView { get; private set; }
         public ShaderResourceView ShaderResourceView { get; private set; }
-        private Texture2D Faces;
-        private Texture2D FaceDepths;
-        private DeviceResources Resources;
-        private Vector3 Position;
         public SharpDX.Direct3D11.Buffer CubeArrayBuffer { get; private set; }
 
-        public RenderableCubemap(DeviceResources resources, Vector3 position)
+        private Texture2D Faces;
+        private Texture2D FaceDepths;
+        private RenderTargetView[] MipRenderTargetViews;
+        private ShaderResourceView[] MipShaderResourceViews;
+
+        private DeviceResources Resources;
+        private Vector3 Position;
+
+        public RenderableCubemap(DeviceResources resources, Vector3 position, int resolution = 1024, int mipCount = 1)
         {
             Resources = resources;
             Position = position;
+            Resolution = resolution;
+            MipCount = mipCount;
+            MipRenderTargetViews = new RenderTargetView[MipCount];
+            MipShaderResourceViews = new ShaderResourceView[MipCount];
+            RenderTargetViews = new ReadOnlyCollection<RenderTargetView>(MipRenderTargetViews);
+            ShaderResourceViews = new ReadOnlyCollection<ShaderResourceView>(MipShaderResourceViews);
         }
 
         public void Initialize()
@@ -78,19 +94,23 @@ namespace Realistic_Hololens_Rendering.Common
                 Format = SharpDX.DXGI.Format.R8G8B8A8_UNorm,
                 Usage = ResourceUsage.Default,
                 OptionFlags = ResourceOptionFlags.TextureCube,
-                MipLevels = 0,
+                MipLevels = MipCount,
                 SampleDescription = new SharpDX.DXGI.SampleDescription(1, 0)
             }));
 
-            var renderTargetViewDescription = new RenderTargetViewDescription()
+            for (int i = 0; i < MipCount; i++)
             {
-                Format = SharpDX.DXGI.Format.R8G8B8A8_UNorm,
-                Dimension = RenderTargetViewDimension.Texture2DArray
-            };
-            renderTargetViewDescription.Texture2DArray.MipSlice = 0;
-            renderTargetViewDescription.Texture2DArray.FirstArraySlice = 0;
-            renderTargetViewDescription.Texture2DArray.ArraySize = 6;
-            RenderTargetView = ToDispose(new RenderTargetView(device, Faces, renderTargetViewDescription));
+                var renderTargetViewDescription = new RenderTargetViewDescription()
+                {
+                    Format = SharpDX.DXGI.Format.R8G8B8A8_UNorm,
+                    Dimension = RenderTargetViewDimension.Texture2DArray
+                };
+                renderTargetViewDescription.Texture2DArray.MipSlice = i;
+                renderTargetViewDescription.Texture2DArray.FirstArraySlice = 0;
+                renderTargetViewDescription.Texture2DArray.ArraySize = 6;
+                MipRenderTargetViews[i] = ToDispose(new RenderTargetView(device, Faces, renderTargetViewDescription));
+            }
+            RenderTargetView = MipRenderTargetViews[0];
 
             FaceDepths = ToDispose(new Texture2D(device, new Texture2DDescription()
             {
@@ -125,8 +145,18 @@ namespace Realistic_Hololens_Rendering.Common
             shaderResourceViewDescription.TextureCube.MipLevels = -1;
             shaderResourceViewDescription.TextureCube.MostDetailedMip = 0;
             ShaderResourceView = ToDispose(new ShaderResourceView(device, Faces, shaderResourceViewDescription));
-            
-            Resources.D3DDeviceContext.ClearRenderTargetView(RenderTargetView, new SharpDX.Mathematics.Interop.RawColor4(0.0f, 0.0f, 0.0f, 0.0f));
+
+            for (int i = 0; i < MipCount; i++)
+            {
+                shaderResourceViewDescription.TextureCube.MipLevels = 1;
+                shaderResourceViewDescription.TextureCube.MostDetailedMip = i;
+                MipShaderResourceViews[i] = ToDispose(new ShaderResourceView(device, Faces, shaderResourceViewDescription));
+            }
+
+            foreach (var renderTargetView in MipRenderTargetViews)
+            { 
+                Resources.D3DDeviceContext.ClearRenderTargetView(renderTargetView, new RawColor4(0.0f, 0.0f, 0.0f, 0.0f));
+            }
             Resources.D3DDeviceContext.ClearDepthStencilView(DepthStencilView, DepthStencilClearFlags.Depth, 1.0f, 0);
         }
     }

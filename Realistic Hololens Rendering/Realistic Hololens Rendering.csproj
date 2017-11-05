@@ -42,18 +42,30 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- A reference to the entire .Net Framework and Windows SDK are automatically included -->
+    <Content Include="Content\Assets\cube rounded.obj" />
+    <Content Include="Content\Assets\mahogfloor_AO.png" />
+    <Content Include="Content\Assets\mahogfloor_basecolor.png" />
+    <Content Include="Content\Assets\mahogfloor_Height.png" />
+    <Content Include="Content\Assets\mahogfloor_normal.png" />
+    <Content Include="Content\Assets\mahogfloor_roughness.png" />
     <None Include="project.json" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Common\MeshExporter.cs" />
+    <Compile Include="Common\MeshLoader.cs" />
     <Compile Include="Common\MeshTextureSet.cs" />
+    <Compile Include="Common\Mesh.cs" />
     <Compile Include="Common\RenderableCubemap.cs" />
     <Compile Include="Common\SpatialMesh.cs" />
     <Compile Include="Common\MeshCollection.cs" />
     <Compile Include="Common\PhysicalCamera.cs" />
+    <Compile Include="Common\Structures.cs" />
     <Compile Include="Common\Utilities.cs" />
     <Compile Include="Content\CameraTestRenderer.cs" />
-    <Compile Include="Content\MeshCollectionTexturer.cs" />
-    <Compile Include="Content\MeshTestRenderer.cs" />
+    <Compile Include="Content\MainRenderer.cs" />
+    <Compile Include="Content\CubemapMeshRenderer.cs" />
+    <Compile Include="Content\MeshRenderer.cs" />
+    <Compile Include="Content\MeshTexturer.cs" />
     <Compile Include="Content\TextureDebugRenderer.cs" />
     <Compile Include="Realistic_Hololens_RenderingMain.cs" />
     <Compile Include="AppView.cs" />

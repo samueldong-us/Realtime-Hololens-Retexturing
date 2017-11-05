@@ -224,18 +224,6 @@ namespace Realistic_Hololens_Rendering.Common
             }
         }
 
-        private class Face
-        {
-            public Vertex[] Vertices = new Vertex[3];
-        }
-
-        private class Vertex
-        {
-            public int PositionIndex;
-            public int NormalIndex;
-            public int UVIndex;
-        }
-
         private Dictionary<Guid, int> CalculateOffsets()
         {
             lock (MeshLock)

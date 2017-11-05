@@ -8,7 +8,7 @@ namespace Realistic_Hololens_Rendering.Content
     /// </summary>
     internal struct ModelConstantBuffer
     {
-        public Matrix4x4 model;
+        public Matrix4x4 Model;
     }
 
     internal struct ScreenPositionBuffer
@@ -98,5 +98,12 @@ namespace Realistic_Hololens_Rendering.Content
             this.position = position;
             this.uv = uv;
         }
+    }
+
+    internal struct VertexPositionNormalUV
+    {
+        public Vector3 Position;
+        public Vector3 Normal;
+        public Vector2 UV;
     }
 }

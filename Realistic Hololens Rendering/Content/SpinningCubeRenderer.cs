@@ -91,7 +91,7 @@ namespace Realistic_Hololens_Rendering.Content
             // with holographic cameras, and updated on a per-camera basis.
             // Here, we provide the model transform for the sample hologram. The model transform
             // matrix is transposed to prepare it for the shader.
-            modelConstantBufferData.model = Matrix4x4.Transpose(modelTransform);
+            modelConstantBufferData.Model = Matrix4x4.Transpose(modelTransform);
 
             // Loading is asynchronous. Resources must be created before they can be updated.
             if (!loadingComplete)

@@ -102,7 +102,7 @@ namespace Realistic_Hololens_Rendering.Content
         {
             Matrix4x4 modelRotation = Matrix4x4.CreateConstrainedBillboard(position, headPosition, Vector3.UnitY, headForward, Vector3.UnitZ);
             Matrix4x4 modelTranslation = Matrix4x4.CreateTranslation(position);
-            modelConstantBufferData.model = Matrix4x4.Transpose(modelRotation * modelTranslation);
+            modelConstantBufferData.Model = Matrix4x4.Transpose(modelRotation * modelTranslation);
 
             if (!loadingFinished)
                 return;
