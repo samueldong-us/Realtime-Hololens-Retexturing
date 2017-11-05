@@ -84,6 +84,12 @@ namespace Realistic_Hololens_Rendering.Content
             if (!Active)
                 return;
 
+            PerformPrepass(meshes, coordinateSystem);
+            PerformProjection(meshes);
+        }
+
+        private void PerformPrepass(MeshCollection meshes, SpatialCoordinateSystem coordinateSystem)
+        {
             var device = Resources.D3DDevice;
             var context = Resources.D3DDeviceContext;
 
@@ -111,6 +117,12 @@ namespace Realistic_Hololens_Rendering.Content
             });
 
             context.OutputMerger.SetRenderTargets(null, (RenderTargetView)null);
+        }
+
+        private void PerformProjection(MeshCollection meshes)
+        {
+            var device = Resources.D3DDevice;
+            var context = Resources.D3DDeviceContext;
 
             var newTriangleCount = meshes.TotalNumberOfTriangles;
             var newNumberOfSide = (int)Math.Ceiling(Math.Sqrt(newTriangleCount / 2.0));
