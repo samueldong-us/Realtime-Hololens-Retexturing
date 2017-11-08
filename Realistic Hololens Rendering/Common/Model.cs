@@ -7,7 +7,7 @@ using System.Numerics;
 
 namespace Realistic_Hololens_Rendering.Common
 {
-    class Mesh : Disposer
+    internal class Model : Disposer
     {
         private SharpDX.Direct3D11.Buffer VertexBuffer;
         private SharpDX.Direct3D11.Buffer ModelConstantBuffer;
@@ -21,6 +21,7 @@ namespace Realistic_Hololens_Rendering.Common
                 UpdateTransform();
             }
         }
+
         public Vector3 Rotation
         {
             get => _Rotation;
@@ -48,7 +49,7 @@ namespace Realistic_Hololens_Rendering.Common
             return new InputLayout(device, shaderBytecode, inputDescription);
         }
 
-        public Mesh(DeviceResources deviceResources, VertexPositionNormalUV[] mesh)
+        public Model(DeviceResources deviceResources, VertexPositionNormalUV[] mesh)
         {
             DeviceResources = deviceResources;
             CreateDeviceDependantResources(mesh);

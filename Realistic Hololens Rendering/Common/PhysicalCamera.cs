@@ -96,7 +96,13 @@ namespace Realistic_Hololens_Rendering.Common
             if (preferredFormat == null)
                 return;
             await frameSource.SetFormatAsync(preferredFormat);
-
+            var cameraController = frameSource.Controller.VideoDeviceController;
+            cameraController.WhiteBalance.TrySetAuto(false);
+            cameraController.WhiteBalance.TrySetValue(2600);
+            cameraController.Exposure.TrySetAuto(false);
+            cameraController.Exposure.TrySetValue(1.0);
+            cameraController.BacklightCompensation.TrySetAuto(false);
+            cameraController.DesiredOptimization = Windows.Media.Devices.MediaCaptureOptimization.Quality;
             mediaFrameReader = await mediaCapture.CreateFrameReaderAsync(frameSource);
             mediaFrameReader.FrameArrived += OnFrameArrived;
             await mediaFrameReader.StartAsync();

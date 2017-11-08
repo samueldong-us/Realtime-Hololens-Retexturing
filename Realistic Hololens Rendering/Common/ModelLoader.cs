@@ -8,9 +8,9 @@ using Windows.Storage;
 
 namespace Realistic_Hololens_Rendering.Common
 {
-    static class MeshLoader
+    internal static class ModelLoader
     {
-        public static async Task<Mesh> LoadObj(DeviceResources deviceResources, string path)
+        public static async Task<Model> LoadObj(DeviceResources deviceResources, string path)
         {
             var folder = Windows.ApplicationModel.Package.Current.InstalledLocation;
             var fileContent = await FileIO.ReadLinesAsync(await folder.GetFileAsync(path));
@@ -48,7 +48,7 @@ namespace Realistic_Hololens_Rendering.Common
                     }
                 }
             }
-            return new Mesh(deviceResources, output.ToArray());
+            return new Model(deviceResources, output.ToArray());
         }
     }
 }

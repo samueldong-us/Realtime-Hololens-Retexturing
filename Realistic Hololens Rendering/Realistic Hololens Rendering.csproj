@@ -52,9 +52,9 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\MeshExporter.cs" />
-    <Compile Include="Common\MeshLoader.cs" />
+    <Compile Include="Common\ModelLoader.cs" />
     <Compile Include="Common\MeshTextureSet.cs" />
-    <Compile Include="Common\Mesh.cs" />
+    <Compile Include="Common\Model.cs" />
     <Compile Include="Common\RenderableCubemap.cs" />
     <Compile Include="Common\SpatialMesh.cs" />
     <Compile Include="Common\MeshCollection.cs" />
